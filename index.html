@@ -152,29 +152,60 @@ const rendAcum = (aporte, taxa, inicio) => {
 const rps = (aporte,taxa) => aporte*taxa/(365.25*24*3600);
 
 // ─── State ───────────────────────────────────────────────────────────────────
+// ─── Dados padrão (primeiro acesso) ─────────────────────────────────────────
+const DEFAULT_DESPESAS = [
+  {id:1,nome:'Aluguel',valor:1500,vencimento:'2026-06-05',prioridade:'essencial',pago:false,categoria:'Moradia',fixa:true,diaVenc:5},
+  {id:2,nome:'Internet',valor:120,vencimento:'2026-06-10',prioridade:'importante',pago:false,categoria:'Serviços',fixa:true,diaVenc:10},
+  {id:3,nome:'Academia',valor:90,vencimento:'2026-06-15',prioridade:'baixo',pago:false,categoria:'Saúde',fixa:false,diaVenc:''},
+  {id:4,nome:'Energia',valor:280,vencimento:'2026-06-08',prioridade:'essencial',pago:true,categoria:'Moradia',fixa:false,diaVenc:''},
+  {id:5,nome:'Streaming',valor:45,vencimento:'2026-06-20',prioridade:'baixo',pago:false,categoria:'Lazer',fixa:true,diaVenc:20},
+  {id:6,nome:'Plano de Saúde',valor:650,vencimento:'2026-06-03',prioridade:'essencial',pago:false,categoria:'Saúde',fixa:true,diaVenc:3},
+];
+const DEFAULT_RECEITAS = [
+  {id:1,nome:'Salário',valor:5000,data:'2026-06-05',recorrente:true},
+  {id:2,nome:'Freelance',valor:800,data:'2026-06-15',recorrente:false},
+];
+const DEFAULT_INVESTIMENTOS = [
+  {id:1,nome:'CDB Nubank 120% CDI',tipo:'cdb',aporte:10000,inicio:'2025-01-10',taxaCustom:null},
+  {id:2,nome:'Tesouro Selic 2029',tipo:'tesouro',aporte:5000,inicio:'2024-06-01',taxaCustom:null},
+  {id:3,nome:'LCI Banco Inter',tipo:'lci',aporte:8000,inicio:'2025-03-15',taxaCustom:null},
+];
+
+// ─── Persistência localStorage ───────────────────────────────────────────────
+function saveData() {
+  try {
+    localStorage.setItem('fvh_despesas',    JSON.stringify(state.despesas));
+    localStorage.setItem('fvh_receitas',    JSON.stringify(state.receitas));
+    localStorage.setItem('fvh_investimentos', JSON.stringify(state.investimentos));
+  } catch(e) { console.warn('Erro ao salvar:', e); }
+}
+
+function loadData() {
+  try {
+    const d = localStorage.getItem('fvh_despesas');
+    const r = localStorage.getItem('fvh_receitas');
+    const i = localStorage.getItem('fvh_investimentos');
+    return {
+      despesas:     d ? JSON.parse(d) : DEFAULT_DESPESAS,
+      receitas:     r ? JSON.parse(r) : DEFAULT_RECEITAS,
+      investimentos: i ? JSON.parse(i) : DEFAULT_INVESTIMENTOS,
+    };
+  } catch(e) {
+    return { despesas: DEFAULT_DESPESAS, receitas: DEFAULT_RECEITAS, investimentos: DEFAULT_INVESTIMENTOS };
+  }
+}
+
+const savedData = loadData();
+
 let state = {
   tab: 'dashboard',
   toast: null,
-  showModal: null, // 'despesa'|'receita'|'investimento'|'comprovante'
+  showModal: null,
   editId: null,
   filtro: 'todas',
-  despesas: [
-    {id:1,nome:'Aluguel',valor:1500,vencimento:'2026-06-05',prioridade:'essencial',pago:false,categoria:'Moradia',fixa:true,diaVenc:5},
-    {id:2,nome:'Internet',valor:120,vencimento:'2026-06-10',prioridade:'importante',pago:false,categoria:'Serviços',fixa:true,diaVenc:10},
-    {id:3,nome:'Academia',valor:90,vencimento:'2026-06-15',prioridade:'baixo',pago:false,categoria:'Saúde',fixa:false,diaVenc:''},
-    {id:4,nome:'Energia',valor:280,vencimento:'2026-06-08',prioridade:'essencial',pago:true,categoria:'Moradia',fixa:false,diaVenc:''},
-    {id:5,nome:'Streaming',valor:45,vencimento:'2026-06-20',prioridade:'baixo',pago:false,categoria:'Lazer',fixa:true,diaVenc:20},
-    {id:6,nome:'Plano de Saúde',valor:650,vencimento:'2026-06-03',prioridade:'essencial',pago:false,categoria:'Saúde',fixa:true,diaVenc:3},
-  ],
-  receitas: [
-    {id:1,nome:'Salário',valor:5000,data:'2026-06-05',recorrente:true},
-    {id:2,nome:'Freelance',valor:800,data:'2026-06-15',recorrente:false},
-  ],
-  investimentos: [
-    {id:1,nome:'CDB Nubank 120% CDI',tipo:'cdb',aporte:10000,inicio:'2025-01-10',taxaCustom:null},
-    {id:2,nome:'Tesouro Selic 2029',tipo:'tesouro',aporte:5000,inicio:'2024-06-01',taxaCustom:null},
-    {id:3,nome:'LCI Banco Inter',tipo:'lci',aporte:8000,inicio:'2025-03-15',taxaCustom:null},
-  ],
+  despesas:      savedData.despesas,
+  receitas:      savedData.receitas,
+  investimentos: savedData.investimentos,
   form: {},
 };
 
@@ -187,6 +218,7 @@ function render() {
 
 function setState(patch) {
   Object.assign(state, patch);
+  saveData();
   render();
 }
 
