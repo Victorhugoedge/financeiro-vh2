@@ -7,43 +7,90 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Fin. VH" />
   <meta name="theme-color" content="#0f172a" />
-  <title>Planejamento Financeiro — Victor Hugo</title>
-
-  <!-- PWA manifest inline -->
+  <title>Planejamento Financeiro</title>
   <link rel="manifest" href="manifest.json" />
-
-  <!-- Apple touch icon (emoji fallback) -->
-  <link rel="apple-touch-icon" href="icon.png" />
-
-  <!-- React + Babel via CDN -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
   <style>
-    html { height: 100%; }
-    body { margin: 0; padding: 0; height: 100%; background: #0f172a; }
-    #root { height: 100%; }
-    #splash {
-      position: fixed; inset: 0; background: linear-gradient(160deg,#1e293b,#0f172a);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      color: #fff; font-family: -apple-system, sans-serif; z-index: 9999;
-      transition: opacity .4s;
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body,#root{margin:0;padding:0;height:100%;background:#0f172a}
+    #splash{
+      position:fixed;inset:0;background:linear-gradient(160deg,#1e293b,#0f172a);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      color:#fff;font-family:-apple-system,sans-serif;z-index:9999;transition:opacity .4s;
     }
-    #splash h1 { font-size: 28px; font-weight: 800; margin: 16px 0 4px; letter-spacing: -0.5px; }
-    #splash p  { font-size: 14px; color: #94a3b8; margin: 0; }
-    #splash .icon { font-size: 64px; }
+    #splash .icon{font-size:72px;margin-bottom:20px}
+    #splash h1{font-size:26px;font-weight:800;margin:0 0 6px;letter-spacing:-.5px}
+    #splash p{font-size:14px;color:#94a3b8;margin:0 0 32px}
+    .bar-wrap{width:160px;height:4px;background:#1e3a5f;border-radius:99px;overflow:hidden}
+    .bar{height:100%;background:#3b82f6;border-radius:99px;width:0;transition:width .3s}
+    #err{display:none;margin-top:20px;font-size:13px;color:#f87171;text-align:center;padding:0 32px}
   </style>
 </head>
 <body>
   <div id="splash">
-    <div class="icon">💰</div>
+    <div class="icon">&#x1F4B0;</div>
     <h1>Planejamento Financeiro</h1>
     <p>Victor Hugo</p>
+    <div class="bar-wrap"><div class="bar" id="bar"></div></div>
+    <div id="err">Erro ao carregar. Verifique sua conexão e recarregue a página.</div>
   </div>
   <div id="root"></div>
 
-  <script type="text/babel" data-presets="react">
+<script>
+// Progress bar animation
+const bar = document.getElementById('bar');
+let pct = 0;
+const iv = setInterval(() => { pct = Math.min(pct + 2, 85); bar.style.width = pct + '%'; }, 80);
+
+function setProgress(p){ pct = p; bar.style.width = p + '%'; }
+function showError(){ clearInterval(iv); document.getElementById('err').style.display='block'; bar.style.background='#ef4444'; }
+function hideSplash(){ 
+  clearInterval(iv); bar.style.width='100%';
+  setTimeout(()=>{ const s=document.getElementById('splash'); if(s){s.style.opacity='0'; setTimeout(()=>s.remove(),400);} }, 300);
+}
+
+function loadScript(src, cb, err) {
+  const s = document.createElement('script');
+  s.src = src; s.onload = cb; s.onerror = err || showError;
+  document.head.appendChild(s);
+}
+
+// Step 1: Load React
+loadScript('https://unpkg.com/react@18.2.0/umd/react.production.min.js', function() {
+  setProgress(30);
+  // Step 2: Load ReactDOM
+  loadScript('https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js', function() {
+    setProgress(55);
+    // Step 3: Load Babel
+    loadScript('https://unpkg.com/@babel/standalone@7.23.5/babel.min.js', function() {
+      setProgress(80);
+      // Step 4: Transform and run app
+      try {
+        const appCode = document.getElementById('app-code').textContent;
+        const transformed = Babel.transform(appCode, {
+          presets: ['react'],
+          filename: 'app.jsx'
+        }).code;
+        setProgress(95);
+        const fn = new Function('React','ReactDOM', transformed + '\nreturn App;');
+        const App = fn(React, ReactDOM);
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(App));
+        hideSplash();
+      } catch(e) {
+        console.error(e);
+        showError();
+      }
+    });
+  });
+});
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+
+<script type="text/plain" id="app-code">
 const { useState, useMemo, useRef, useEffect } = React;
 
 // ── iPhone / PWA global styles ────────────────────────────────────────────────
@@ -1014,85 +1061,4 @@ export default function App() {
                         {/* Ticker rendimento */}
                         <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 12, padding: "10px 16px", textAlign: "right", minWidth: 140 }}>
                           <div style={{ fontSize: 11, color: "#16a34a", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>⚡ Rendimento total</div>
-                          <div style={{ fontSize: 18, fontWeight: 800, color: "#16a34a", fontVariantNumeric: "tabular-nums" }}>
-                            <TickerRend valorAportado={inv.aporte} taxaAnual={taxa} dataInicio={inv.dataInicio} />
-                          </div>
-                          <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>~{fmt(rendMensal)}/mês</div>
-                        </div>
-
-                        <div style={{ display: "flex", flexDirection: "column", gap: 6, paddingTop: 4 }}>
-                          <div style={{ textAlign: "right" }}>
-                            <div style={{ fontSize: 11, color: "#94a3b8" }}>Patrimônio atual</div>
-                            <div style={{ fontSize: 16, fontWeight: 800, color: tipo.cor }}>{fmt(inv.aporte + rendAcum)}</div>
-                          </div>
-                          <div style={{ display: "flex", gap: 6 }}>
-                            <button style={{ ...S.btn("ghost"), padding: "5px 10px", fontSize: 12 }} onClick={() => startEditInv(inv)}>✏️</button>
-                            <button style={{ ...S.btn("danger"), padding: "5px 10px", fontSize: 12 }} onClick={() => deleteInv(inv.id)}>🗑</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Disclaimer */}
-              {investimentos.length > 0 && (
-                <div style={{ marginTop: 8, padding: "10px 14px", background: "#fff7ed", borderRadius: 10, border: "1px solid #fed7aa" }}>
-                  <span style={{ fontSize: 12, color: "#92400e" }}>⚠️ Os rendimentos exibidos são estimativas baseadas em taxas médias de mercado. Para valores exatos, consulte seu extrato na instituição financeira.</span>
-                </div>
-              )}
-            </div>
-          );
-        })()}
-
-      </main>
-
-      {/* ── Bottom Navigation Bar ── */}
-      <nav className="bottom-nav">
-        {[
-          ["dashboard",  "📊", "Início"],
-          ["ranking",    "🏆", "Ranking"],
-          ["despesas",   "📋", "Despesas"],
-          ["fixas",      "📌", "Fixas"],
-          ["receitas",   "💵", "Receitas"],
-          ["investimentos","📈","Invest."],
-        ].map(([id, icon, label]) => (
-          <button
-            key={id}
-            className="nav-item"
-            onClick={() => setTab(id)}
-            style={{ color: tab === id ? "#3b82f6" : "#94a3b8" }}
-          >
-            <span className="nav-icon" style={{ filter: tab === id ? "none" : "grayscale(0.4)" }}>{icon}</span>
-            <span className="nav-label" style={{ fontWeight: tab === id ? 800 : 500 }}>{label}</span>
-            {tab === id && <span style={{ width: 4, height: 4, borderRadius: "50%", background: "#3b82f6", marginTop: 1 }} />}
-          </button>
-        ))}
-      </nav>
-    </div>
-  );
-}
-
-
-    const container = document.getElementById('root');
-    const reactRoot = ReactDOM.createRoot(container);
-    reactRoot.render(<App />);
-
-    // Hide splash after render
-    setTimeout(() => {
-      const s = document.getElementById('splash');
-      if (s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 400); }
-    }, 600);
-  </script>
-
-  <!-- Service Worker registration for offline PWA -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
-      });
-    }
-  </script>
-</body>
-</html>
+                          <div style={{ fontSiz
