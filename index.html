@@ -1,1064 +1,945 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Fin. VH" />
-  <meta name="theme-color" content="#0f172a" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Fin. VH"/>
+  <meta name="theme-color" content="#0f172a"/>
   <title>Planejamento Financeiro</title>
-  <link rel="manifest" href="manifest.json" />
+  <link rel="manifest" href="manifest.json"/>
   <style>
-    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html,body,#root{margin:0;padding:0;height:100%;background:#0f172a}
-    #splash{
-      position:fixed;inset:0;background:linear-gradient(160deg,#1e293b,#0f172a);
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      color:#fff;font-family:-apple-system,sans-serif;z-index:9999;transition:opacity .4s;
-    }
-    #splash .icon{font-size:72px;margin-bottom:20px}
-    #splash h1{font-size:26px;font-weight:800;margin:0 0 6px;letter-spacing:-.5px}
-    #splash p{font-size:14px;color:#94a3b8;margin:0 0 32px}
-    .bar-wrap{width:160px;height:4px;background:#1e3a5f;border-radius:99px;overflow:hidden}
-    .bar{height:100%;background:#3b82f6;border-radius:99px;width:0;transition:width .3s}
-    #err{display:none;margin-top:20px;font-size:13px;color:#f87171;text-align:center;padding:0 32px}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+    html,body{height:100%;background:#f8fafc;font-family:-apple-system,'SF Pro Display',sans-serif}
+    input,select,button{font-family:inherit;-webkit-appearance:none}
+    input,select{font-size:16px!important}
+    ::-webkit-scrollbar{display:none}
+
+    .app{min-height:100dvh;background:#f8fafc;color:#1e293b;padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+
+    /* Header */
+    .header{background:linear-gradient(160deg,#1e293b,#0f172a);color:#fff;
+      padding:calc(env(safe-area-inset-top) + 16px) 20px 18px;
+      display:flex;align-items:center;justify-content:space-between}
+    .header h1{font-size:18px;font-weight:800;letter-spacing:-.5px}
+    .header p{font-size:11px;color:#94a3b8;margin-top:2px}
+    .saldo-label{font-size:10px;color:#94a3b8;text-align:right;text-transform:uppercase;letter-spacing:.5px}
+    .saldo-val{font-size:20px;font-weight:800;text-align:right;letter-spacing:-.5px}
+
+    /* Bottom Nav */
+    .bottom-nav{position:fixed;bottom:0;left:0;right:0;
+      background:rgba(255,255,255,.95);backdrop-filter:blur(20px);
+      border-top:1px solid #e2e8f0;
+      padding-bottom:env(safe-area-inset-bottom);
+      display:flex;z-index:100}
+    .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;padding:10px 4px 8px;gap:2px;
+      border:none;background:none;cursor:pointer;transition:transform .1s}
+    .nav-btn:active{transform:scale(.9)}
+    .nav-icon{font-size:20px;line-height:1}
+    .nav-label{font-size:9px;font-weight:600;letter-spacing:.2px}
+    .nav-dot{width:4px;height:4px;border-radius:50%;background:#3b82f6;margin-top:1px}
+
+    /* Main */
+    .main{padding:16px}
+
+    /* Cards */
+    .card{background:#fff;border-radius:20px;padding:16px;
+      box-shadow:0 2px 8px rgba(0,0,0,.06);border:1px solid #f1f5f9;margin-bottom:12px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+    .stat-card{border-radius:16px;padding:14px 16px}
+    .stat-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#94a3b8;margin-bottom:3px}
+    .stat-val{font-size:20px;font-weight:800;letter-spacing:-.5px}
+    .stat-sub{font-size:11px;margin-top:2px;opacity:.7}
+
+    /* Buttons */
+    .btn{border:none;border-radius:12px;padding:11px 18px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+    .btn-primary{background:#3b82f6;color:#fff}
+    .btn-success{background:#22c55e;color:#fff}
+    .btn-danger{background:#ef4444;color:#fff}
+    .btn-purple{background:#7c3aed;color:#fff}
+    .btn-ghost{background:#f1f5f9;color:#475569}
+    .btn-teal{background:#0d9488;color:#fff}
+    .btn-sm{padding:8px 12px;font-size:12px;min-height:36px;border-radius:10px}
+
+    /* Form */
+    .form-group{margin-bottom:12px}
+    .form-label{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;display:block}
+    .form-input{width:100%;border:1.5px solid #e2e8f0;border-radius:12px;padding:13px 14px;font-size:16px;outline:none;color:#1e293b;background:#fff}
+    .form-select{width:100%;border:1.5px solid #e2e8f0;border-radius:12px;padding:13px 14px;font-size:16px;outline:none;color:#1e293b;background:#fff}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+    /* Toggle */
+    .toggle-wrap{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;cursor:pointer;transition:all .2s}
+    .toggle-track{width:40px;height:22px;border-radius:99px;position:relative;flex-shrink:0;transition:background .2s}
+    .toggle-thumb{width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+
+    /* Rows */
+    .row{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f1f5f9}
+    .row:last-child{border-bottom:none}
+
+    /* Rank */
+    .rank-item{display:flex;gap:10px;align-items:center;padding:14px;border-radius:16px;margin-bottom:10px;border:1px solid #f1f5f9}
+    .rank-num{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0}
+
+    /* Badges */
+    .badge{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;border:1px solid}
+    .badge-fixa{background:#ede9fe;color:#7c3aed;border-color:#c4b5fd}
+    .days-badge{font-size:11px;font-weight:700}
+
+    /* Progress bar */
+    .prog-wrap{background:#f1f5f9;border-radius:99px;height:8px;overflow:hidden}
+    .prog-bar{height:100%;border-radius:99px;transition:width .5s}
+
+    /* Toast */
+    .toast{position:fixed;top:calc(env(safe-area-inset-top) + 16px);right:16px;left:16px;
+      background:#1e293b;color:#fff;border-radius:14px;padding:14px 18px;
+      font-weight:600;font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.25);
+      z-index:999;text-align:center;animation:fadeIn .3s}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+
+    /* Modal */
+    .overlay{position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:200;display:flex;align-items:flex-end}
+    .modal{background:#fff;border-radius:24px 24px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 20px calc(20px + env(safe-area-inset-bottom))}
+    .modal-handle{width:36px;height:4px;background:#e2e8f0;border-radius:99px;margin:0 auto 16px}
+
+    /* Invest card */
+    .inv-card{background:#fff;border-radius:20px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    .ticker{font-variant-numeric:tabular-nums;font-weight:800;font-size:20px}
+
+    /* CTA */
+    .cta{border-radius:20px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .section-title{font-size:16px;font-weight:800;margin-bottom:4px}
+    .section-sub{font-size:12px;color:#64748b}
+    .flex-between{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+    .flex-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   </style>
 </head>
 <body>
-  <div id="splash">
-    <div class="icon">&#x1F4B0;</div>
-    <h1>Planejamento Financeiro</h1>
-    <p>Victor Hugo</p>
-    <div class="bar-wrap"><div class="bar" id="bar"></div></div>
-    <div id="err">Erro ao carregar. Verifique sua conexão e recarregue a página.</div>
-  </div>
-  <div id="root"></div>
+<div id="app"></div>
 
 <script>
-// Progress bar animation
-const bar = document.getElementById('bar');
-let pct = 0;
-const iv = setInterval(() => { pct = Math.min(pct + 2, 85); bar.style.width = pct + '%'; }, 80);
-
-function setProgress(p){ pct = p; bar.style.width = p + '%'; }
-function showError(){ clearInterval(iv); document.getElementById('err').style.display='block'; bar.style.background='#ef4444'; }
-function hideSplash(){ 
-  clearInterval(iv); bar.style.width='100%';
-  setTimeout(()=>{ const s=document.getElementById('splash'); if(s){s.style.opacity='0'; setTimeout(()=>s.remove(),400);} }, 300);
-}
-
-function loadScript(src, cb, err) {
-  const s = document.createElement('script');
-  s.src = src; s.onload = cb; s.onerror = err || showError;
-  document.head.appendChild(s);
-}
-
-// Step 1: Load React
-loadScript('https://unpkg.com/react@18.2.0/umd/react.production.min.js', function() {
-  setProgress(30);
-  // Step 2: Load ReactDOM
-  loadScript('https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js', function() {
-    setProgress(55);
-    // Step 3: Load Babel
-    loadScript('https://unpkg.com/@babel/standalone@7.23.5/babel.min.js', function() {
-      setProgress(80);
-      // Step 4: Transform and run app
-      try {
-        const appCode = document.getElementById('app-code').textContent;
-        const transformed = Babel.transform(appCode, {
-          presets: ['react'],
-          filename: 'app.jsx'
-        }).code;
-        setProgress(95);
-        const fn = new Function('React','ReactDOM', transformed + '\nreturn App;');
-        const App = fn(React, ReactDOM);
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(React.createElement(App));
-        hideSplash();
-      } catch(e) {
-        console.error(e);
-        showError();
-      }
-    });
-  });
-});
-
-// Service Worker
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
-}
-</script>
-
-<script type="text/plain" id="app-code">
-const { useState, useMemo, useRef, useEffect } = React;
-
-// ── iPhone / PWA global styles ────────────────────────────────────────────────
-const GlobalStyle = () => (
-  <style>{`
-    *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html, body, #root { height: 100%; margin: 0; padding: 0; }
-    body {
-      background: #f8fafc;
-      overscroll-behavior: none;
-      -webkit-overflow-scrolling: touch;
-      font-family: -apple-system, 'SF Pro Display', 'DM Sans', sans-serif;
-    }
-    input, select, textarea { font-size: 16px !important; } /* prevent iOS zoom */
-    ::-webkit-scrollbar { display: none; }
-    .tab-content { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
-    .bottom-nav {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(255,255,255,0.92);
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid #e2e8f0;
-      padding-bottom: env(safe-area-inset-bottom);
-      display: flex;
-    }
-    .nav-item {
-      flex: 1; display: flex; flex-direction: column; align-items: center;
-      justify-content: center; padding: 10px 4px 8px; gap: 3px;
-      border: none; background: none; cursor: pointer;
-      transition: transform .15s; -webkit-appearance: none;
-    }
-    .nav-item:active { transform: scale(0.9); }
-    .nav-icon { font-size: 22px; line-height: 1; }
-    .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.2px; }
-    .app-header {
-      padding-top: max(env(safe-area-inset-top), 16px);
-      padding-left: env(safe-area-inset-left);
-      padding-right: env(safe-area-inset-right);
-    }
-    .card-press { transition: transform .12s, box-shadow .12s; }
-    .card-press:active { transform: scale(0.985); box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-    @keyframes fadeSlideUp {
-      from { opacity: 0; transform: translateY(14px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .page-enter { animation: fadeSlideUp .22s ease-out; }
-    @keyframes pulse-green {
-      0%,100% { opacity: 1; } 50% { opacity: 0.7; }
-    }
-    .ticker-live { animation: pulse-green 2s ease-in-out infinite; }
-  `}</style>
-);
-
-const PRIORITY_CONFIG = {
-  essencial: { label: "Essencial", color: "#ef4444", bg: "#fef2f2", border: "#fecaca", icon: "🔴", order: 1 },
-  importante: { label: "Importante", color: "#f97316", bg: "#fff7ed", border: "#fed7aa", icon: "🟠", order: 2 },
-  moderado: { label: "Moderado", color: "#eab308", bg: "#fefce8", border: "#fef08a", icon: "🟡", order: 3 },
-  baixo: { label: "Baixo", color: "#22c55e", bg: "#f0fdf4", border: "#bbf7d0", icon: "🟢", order: 4 },
+// ─── Config ──────────────────────────────────────────────────────────────────
+const PRIORITY = {
+  essencial: {label:'Essencial',color:'#ef4444',bg:'#fef2f2',border:'#fecaca',icon:'🔴',order:1},
+  importante:{label:'Importante',color:'#f97316',bg:'#fff7ed',border:'#fed7aa',icon:'🟠',order:2},
+  moderado:  {label:'Moderado',  color:'#eab308',bg:'#fefce8',border:'#fef08a',icon:'🟡',order:3},
+  baixo:     {label:'Baixo',     color:'#22c55e',bg:'#f0fdf4',border:'#bbf7d0',icon:'🟢',order:4},
+};
+const TIPOS_INV = {
+  cdb:     {label:'CDB',          icon:'🏦',cor:'#3b82f6',taxa:0.1265},
+  lci:     {label:'LCI/LCA',      icon:'🌾',cor:'#22c55e',taxa:0.1100},
+  tesouro: {label:'Tesouro Selic',icon:'🇧🇷',cor:'#f59e0b',taxa:0.1265},
+  fundos:  {label:'Fundos DI',    icon:'📈',cor:'#8b5cf6',taxa:0.1100},
+  acoes:   {label:'Ações/ETF',    icon:'📉',cor:'#ef4444',taxa:0.1500},
+  poupanca:{label:'Poupança',     icon:'🐷',cor:'#ec4899',taxa:0.0706},
+  cripto:  {label:'Cripto',       icon:'₿', cor:'#f97316',taxa:0.2500},
+  outro:   {label:'Outro',        icon:'💼',cor:'#64748b',taxa:0.1000},
 };
 
-const fmt = (v) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const fmtDate = (d) => d ? new Date(d + "T12:00:00").toLocaleDateString("pt-BR") : "—";
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const fmt = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const fmtDate = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—';
+const daysUntil = d => {
+  if(!d) return null;
+  return Math.ceil((new Date(d+'T12:00:00') - new Date(new Date().toDateString())) / 86400000);
+};
+const rendAcum = (aporte, taxa, inicio) => {
+  const anos = Math.max(0,(Date.now() - new Date(inicio+'T00:00:00').getTime())/(1000*60*60*24*365.25));
+  return aporte * (Math.pow(1+taxa, anos) - 1);
+};
+const rps = (aporte,taxa) => aporte*taxa/(365.25*24*3600);
 
-const daysUntil = (dateStr) => {
-  if (!dateStr) return null;
-  const diff = new Date(dateStr + "T12:00:00") - new Date(new Date().toDateString());
-  return Math.ceil(diff / 86400000);
+// ─── State ───────────────────────────────────────────────────────────────────
+let state = {
+  tab: 'dashboard',
+  toast: null,
+  showModal: null, // 'despesa'|'receita'|'investimento'|'comprovante'
+  editId: null,
+  filtro: 'todas',
+  despesas: [
+    {id:1,nome:'Aluguel',valor:1500,vencimento:'2026-06-05',prioridade:'essencial',pago:false,categoria:'Moradia',fixa:true,diaVenc:5},
+    {id:2,nome:'Internet',valor:120,vencimento:'2026-06-10',prioridade:'importante',pago:false,categoria:'Serviços',fixa:true,diaVenc:10},
+    {id:3,nome:'Academia',valor:90,vencimento:'2026-06-15',prioridade:'baixo',pago:false,categoria:'Saúde',fixa:false,diaVenc:''},
+    {id:4,nome:'Energia',valor:280,vencimento:'2026-06-08',prioridade:'essencial',pago:true,categoria:'Moradia',fixa:false,diaVenc:''},
+    {id:5,nome:'Streaming',valor:45,vencimento:'2026-06-20',prioridade:'baixo',pago:false,categoria:'Lazer',fixa:true,diaVenc:20},
+    {id:6,nome:'Plano de Saúde',valor:650,vencimento:'2026-06-03',prioridade:'essencial',pago:false,categoria:'Saúde',fixa:true,diaVenc:3},
+  ],
+  receitas: [
+    {id:1,nome:'Salário',valor:5000,data:'2026-06-05',recorrente:true},
+    {id:2,nome:'Freelance',valor:800,data:'2026-06-15',recorrente:false},
+  ],
+  investimentos: [
+    {id:1,nome:'CDB Nubank 120% CDI',tipo:'cdb',aporte:10000,inicio:'2025-01-10',taxaCustom:null},
+    {id:2,nome:'Tesouro Selic 2029',tipo:'tesouro',aporte:5000,inicio:'2024-06-01',taxaCustom:null},
+    {id:3,nome:'LCI Banco Inter',tipo:'lci',aporte:8000,inicio:'2025-03-15',taxaCustom:null},
+  ],
+  form: {},
 };
 
-function Badge({ priority }) {
-  const c = PRIORITY_CONFIG[priority];
-  return (
-    <span style={{ background: c.bg, color: c.color, border: `1px solid ${c.border}`, borderRadius: 20, padding: "2px 10px", fontSize: 12, fontWeight: 700, fontFamily: "inherit" }}>
-      {c.icon} {c.label}
-    </span>
-  );
+// ─── Render engine ───────────────────────────────────────────────────────────
+function render() {
+  const el = document.getElementById('app');
+  el.innerHTML = buildApp();
+  bindEvents();
 }
 
-function FixaBadge() {
-  return (
-    <span style={{ background: "#ede9fe", color: "#7c3aed", border: "1px solid #c4b5fd", borderRadius: 20, padding: "2px 10px", fontSize: 11, fontWeight: 700 }}>
-      📌 Fixa
-    </span>
-  );
+function setState(patch) {
+  Object.assign(state, patch);
+  render();
 }
 
-function DaysBadge({ dateStr }) {
-  const d = daysUntil(dateStr);
-  if (d === null) return null;
-  const color = d < 0 ? "#ef4444" : d <= 3 ? "#f97316" : d <= 7 ? "#eab308" : "#64748b";
-  const label = d < 0 ? `${Math.abs(d)}d atrasado` : d === 0 ? "Vence hoje" : `${d}d`;
-  return <span style={{ color, fontSize: 11, fontWeight: 700 }}>{label}</span>;
-}
+// ─── Builders ────────────────────────────────────────────────────────────────
+function buildApp() {
+  const {despesas,receitas,investimentos,tab} = state;
+  const totRec = receitas.reduce((s,r)=>s+r.valor,0);
+  const totDesp = despesas.reduce((s,d)=>s+d.valor,0);
+  const saldo = totRec - totDesp;
+  const saldoColor = saldo>=0?'#4ade80':'#f87171';
 
-const INITIAL_DESPESAS = [
-  { id: 1, nome: "Aluguel", valor: 1500, vencimento: "2026-06-05", prioridade: "essencial", pago: false, categoria: "Moradia", fixa: true, diaVencimento: 5 },
-  { id: 2, nome: "Internet", valor: 120, vencimento: "2026-06-10", prioridade: "importante", pago: false, categoria: "Serviços", fixa: true, diaVencimento: 10 },
-  { id: 3, nome: "Academia", valor: 90, vencimento: "2026-06-15", prioridade: "baixo", pago: false, categoria: "Saúde", fixa: false, diaVencimento: "" },
-  { id: 4, nome: "Energia Elétrica", valor: 280, vencimento: "2026-06-08", prioridade: "essencial", pago: true, categoria: "Moradia", fixa: false, diaVencimento: "" },
-  { id: 5, nome: "Streaming", valor: 45, vencimento: "2026-06-20", prioridade: "baixo", pago: false, categoria: "Lazer", fixa: true, diaVencimento: 20 },
-  { id: 6, nome: "Plano de Saúde", valor: 650, vencimento: "2026-06-03", prioridade: "essencial", pago: false, categoria: "Saúde", fixa: true, diaVencimento: 3 },
-];
+  return `
+  <div class="app">
+    ${state.toast ? `<div class="toast">${state.toast}</div>` : ''}
+    ${state.showModal ? buildModal() : ''}
 
-// ── Comprovante Modal ──────────────────────────────────────────────────────────
-function ComprovanteModal({ despesas, onClose, onConfirm }) {
-  const [stage, setStage] = useState("upload"); // upload | analyzing | result | confirm
-  const [imagePreview, setImagePreview] = useState(null);
-  const [imageBase64, setImageBase64] = useState(null);
-  const [imageType, setImageType] = useState("image/jpeg");
-  const [result, setResult] = useState(null);
-  const [matchedId, setMatchedId] = useState(null);
-  const [error, setError] = useState(null);
-  const [dragging, setDragging] = useState(false);
-  const fileRef = useRef();
-
-  const handleFile = (file) => {
-    if (!file || !file.type.startsWith("image/")) return;
-    setImageType(file.type);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreview(e.target.result);
-      setImageBase64(e.target.result.split(",")[1]);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const analyze = async () => {
-    if (!imageBase64) return;
-    setStage("analyzing");
-    setError(null);
-
-    const despesasNomes = despesas.filter(d => !d.pago).map(d => `ID ${d.id}: ${d.nome} (${fmt(d.valor)})`).join(", ");
-
-    try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages: [{
-            role: "user",
-            content: [
-              {
-                type: "image",
-                source: { type: "base64", media_type: imageType, data: imageBase64 }
-              },
-              {
-                type: "text",
-                text: `Você é um assistente de finanças pessoais. Analise este comprovante de pagamento e extraia as informações.
-
-Despesas pendentes no app: ${despesasNomes}
-
-Retorne APENAS um JSON válido, sem texto antes ou depois, sem marcação markdown:
-{
-  "beneficiario": "nome do beneficiário/empresa que recebeu o pagamento",
-  "valor": 0.00,
-  "data": "DD/MM/AAAA",
-  "tipo": "tipo do pagamento (PIX, boleto, débito, etc)",
-  "descricao": "descrição curta do que foi pago",
-  "despesaIdMatch": null,
-  "confianca": "alta|media|baixa",
-  "motivo": "explicação breve de qual despesa foi identificada ou por que não foi possível identificar"
-}
-
-Para despesaIdMatch: compare o beneficiário e valor do comprovante com as despesas listadas. Se encontrar correspondência, coloque o ID numérico. Se não encontrar, coloque null.
-Se a imagem não for um comprovante de pagamento, retorne: {"erro": "Imagem não reconhecida como comprovante de pagamento"}`
-              }
-            ]
-          }]
-        })
-      });
-
-      const data = await res.json();
-      const text = data.content?.map(b => b.text || "").join("").trim();
-      const clean = text.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
-
-      if (parsed.erro) { setError(parsed.erro); setStage("upload"); return; }
-
-      setResult(parsed);
-      setMatchedId(parsed.despesaIdMatch || null);
-      setStage("result");
-    } catch (e) {
-      setError("Erro ao analisar o comprovante. Tente novamente.");
-      setStage("upload");
-    }
-  };
-
-  const S = {
-    overlay: { position: "fixed", inset: 0, background: "rgba(15,23,42,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 },
-    modal: { background: "#fff", borderRadius: 20, width: "100%", maxWidth: 500, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 25px 60px rgba(0,0,0,0.3)" },
-    header: { padding: "20px 24px 0", display: "flex", justifyContent: "space-between", alignItems: "center" },
-    body: { padding: "16px 24px 24px" },
-    dropzone: (drag) => ({ border: `2px dashed ${drag ? "#3b82f6" : "#e2e8f0"}`, borderRadius: 14, padding: "32px 24px", textAlign: "center", background: drag ? "#eff6ff" : "#f8fafc", cursor: "pointer", transition: "all .2s" }),
-    btn: (v = "primary") => ({ background: v === "primary" ? "#3b82f6" : v === "success" ? "#22c55e" : v === "danger" ? "#ef4444" : "#f1f5f9", color: ["primary","success","danger"].includes(v) ? "#fff" : "#475569", border: "none", borderRadius: 9, padding: "10px 20px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }),
-    infoRow: { display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f1f5f9", fontSize: 14 },
-  };
-
-  const matchedDespesa = matchedId ? despesas.find(d => d.id === matchedId) : null;
-
-  return (
-    <div style={S.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={S.modal}>
-        <div style={S.header}>
-          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800 }}>📄 Comprovante de Pagamento</h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#94a3b8" }}>✕</button>
-        </div>
-        <div style={S.body}>
-
-          {/* UPLOAD */}
-          {(stage === "upload") && (
-            <>
-              {error && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: "10px 14px", marginBottom: 12, color: "#ef4444", fontSize: 13 }}>⚠️ {error}</div>}
-
-              <div
-                style={S.dropzone(dragging)}
-                onClick={() => fileRef.current.click()}
-                onDragOver={e => { e.preventDefault(); setDragging(true); }}
-                onDragLeave={() => setDragging(false)}
-                onDrop={e => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
-              >
-                {imagePreview ? (
-                  <img src={imagePreview} alt="comprovante" style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 10, objectFit: "contain" }} />
-                ) : (
-                  <>
-                    <div style={{ fontSize: 40, marginBottom: 10 }}>🧾</div>
-                    <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Arraste ou clique para enviar</div>
-                    <div style={{ fontSize: 13, color: "#94a3b8" }}>Foto ou print do comprovante (PIX, boleto, recibo...)</div>
-                  </>
-                )}
-                <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => handleFile(e.target.files[0])} />
-              </div>
-
-              {imagePreview && (
-                <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-                  <button style={S.btn("primary")} onClick={analyze}>🔍 Analisar Comprovante</button>
-                  <button style={S.btn()} onClick={() => { setImagePreview(null); setImageBase64(null); }}>Trocar imagem</button>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* ANALYZING */}
-          {stage === "analyzing" && (
-            <div style={{ textAlign: "center", padding: "32px 0" }}>
-              <div style={{ fontSize: 48, marginBottom: 16, animation: "spin 1.5s linear infinite", display: "inline-block" }}>🔍</div>
-              <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-              <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Analisando comprovante...</div>
-              <div style={{ fontSize: 13, color: "#94a3b8" }}>A IA está lendo o comprovante e identificando a despesa</div>
-            </div>
-          )}
-
-          {/* RESULT */}
-          {stage === "result" && result && (
-            <>
-              {imagePreview && <img src={imagePreview} alt="comprovante" style={{ width: "100%", maxHeight: 140, objectFit: "cover", borderRadius: 10, marginBottom: 14 }} />}
-
-              <div style={{ background: "#f8fafc", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>Dados extraídos do comprovante</div>
-                <div style={S.infoRow}><span style={{ color: "#64748b" }}>Beneficiário</span><span style={{ fontWeight: 700 }}>{result.beneficiario || "—"}</span></div>
-                <div style={S.infoRow}><span style={{ color: "#64748b" }}>Valor</span><span style={{ fontWeight: 800, color: "#1e293b" }}>{result.valor ? fmt(result.valor) : "—"}</span></div>
-                <div style={S.infoRow}><span style={{ color: "#64748b" }}>Data</span><span style={{ fontWeight: 700 }}>{result.data || "—"}</span></div>
-                <div style={{ ...S.infoRow, borderBottom: "none" }}><span style={{ color: "#64748b" }}>Tipo</span><span style={{ fontWeight: 700 }}>{result.tipo || "—"}</span></div>
-              </div>
-
-              {matchedDespesa ? (
-                <div style={{ background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#16a34a", marginBottom: 6 }}>✅ Despesa identificada</div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div>
-                      <div style={{ fontWeight: 800, fontSize: 15 }}>{matchedDespesa.nome}</div>
-                      <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{result.motivo}</div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontWeight: 800, color: "#16a34a" }}>{fmt(matchedDespesa.valor)}</div>
-                      <div style={{ fontSize: 11 }}><Badge priority={matchedDespesa.prioridade} /></div>
-                    </div>
-                  </div>
-                  <div style={{ marginTop: 4, fontSize: 12 }}>
-                    Confiança: <span style={{ fontWeight: 700, color: result.confianca === "alta" ? "#22c55e" : result.confianca === "media" ? "#f97316" : "#ef4444" }}>{result.confianca}</span>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#ea580c", marginBottom: 4 }}>⚠️ Nenhuma despesa correspondente encontrada</div>
-                  <div style={{ fontSize: 13, color: "#64748b" }}>{result.motivo || "Não foi possível vincular este comprovante a uma despesa cadastrada."}</div>
-                  <div style={{ marginTop: 10 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Selecionar manualmente:</div>
-                    <select style={{ width: "100%", border: "1px solid #e2e8f0", borderRadius: 8, padding: "8px 10px", fontSize: 13, fontFamily: "inherit" }}
-                      onChange={e => setMatchedId(e.target.value ? parseInt(e.target.value) : null)}
-                      value={matchedId || ""}>
-                      <option value="">— Selecione a despesa —</option>
-                      {despesas.filter(d => !d.pago).map(d => (
-                        <option key={d.id} value={d.id}>{d.nome} — {fmt(d.valor)}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {matchedId && (
-                  <button style={S.btn("success")} onClick={() => onConfirm(matchedId)}>
-                    ✅ Marcar como paga
-                  </button>
-                )}
-                <button style={S.btn()} onClick={() => { setStage("upload"); setResult(null); setMatchedId(null); }}>
-                  🔄 Novo comprovante
-                </button>
-                <button style={S.btn()} onClick={onClose}>Cancelar</button>
-              </div>
-            </>
-          )}
-        </div>
+    <div class="header">
+      <div>
+        <h1>💰 Planejamento Financeiro</h1>
+        <p>Victor Hugo</p>
+      </div>
+      <div>
+        <div class="saldo-label">Saldo</div>
+        <div class="saldo-val" style="color:${saldoColor}">${fmt(saldo)}</div>
       </div>
     </div>
-  );
+
+    <div class="main">
+      ${tab==='dashboard'    ? buildDashboard() : ''}
+      ${tab==='ranking'      ? buildRanking()   : ''}
+      ${tab==='despesas'     ? buildDespesas()  : ''}
+      ${tab==='fixas'        ? buildFixas()     : ''}
+      ${tab==='receitas'     ? buildReceitas()  : ''}
+      ${tab==='investimentos'? buildInvest()    : ''}
+    </div>
+
+    <nav class="bottom-nav">
+      ${[['dashboard','📊','Início'],['ranking','🏆','Ranking'],['despesas','📋','Despesas'],
+         ['fixas','📌','Fixas'],['receitas','💵','Receitas'],['investimentos','📈','Invest.']
+        ].map(([id,icon,label])=>`
+        <button class="nav-btn" data-tab="${id}" style="color:${tab===id?'#3b82f6':'#94a3b8'}">
+          <span class="nav-icon">${icon}</span>
+          <span class="nav-label" style="font-weight:${tab===id?800:500}">${label}</span>
+          ${tab===id?'<span class="nav-dot"></span>':''}
+        </button>`).join('')}
+    </nav>
+  </div>`;
 }
 
-// ── Tipos de investimento com taxas anuais ────────────────────────────────────
-const TIPOS_INV = {
-  cdb:        { label: "CDB",         icon: "🏦", cor: "#3b82f6", taxaAnual: 0.1265 }, // CDI ~12.65% a.a.
-  lci:        { label: "LCI/LCA",     icon: "🌾", cor: "#22c55e", taxaAnual: 0.1100 },
-  tesouro:    { label: "Tesouro Selic",icon: "🇧🇷", cor: "#f59e0b", taxaAnual: 0.1265 },
-  fundos:     { label: "Fundos DI",   icon: "📈", cor: "#8b5cf6", taxaAnual: 0.1100 },
-  acoes:      { label: "Ações/ETF",   icon: "📉", cor: "#ef4444", taxaAnual: 0.1500 },
-  poupanca:   { label: "Poupança",    icon: "🐷", cor: "#ec4899", taxaAnual: 0.0706 },
-  cripto:     { label: "Cripto",      icon: "₿",  cor: "#f97316", taxaAnual: 0.2500 },
-  outro:      { label: "Outro",       icon: "💼", cor: "#64748b", taxaAnual: 0.1000 },
-};
-
-// rendimento acumulado desde dataInicio até agora em segundos
-function rendimentoAtual(valorAportado, taxaAnual, dataInicio) {
-  const msInicio = new Date(dataInicio + "T00:00:00").getTime();
-  const msAgora  = Date.now();
-  const anos     = (msAgora - msInicio) / (1000 * 60 * 60 * 24 * 365.25);
-  if (anos <= 0) return 0;
-  return valorAportado * (Math.pow(1 + taxaAnual, anos) - 1);
+function daysBadge(venc) {
+  if(!venc) return '';
+  const d = daysUntil(venc);
+  const color = d<0?'#ef4444':d<=3?'#f97316':d<=7?'#eab308':'#94a3b8';
+  const label = d<0?`${Math.abs(d)}d atrasado`:d===0?'Hoje':`${d}d`;
+  return `<span class="days-badge" style="color:${color}">${label}</span>`;
 }
 
-// rendimento por segundo (para o ticker)
-function rendPorSegundo(valorAportado, taxaAnual) {
-  return valorAportado * taxaAnual / (365.25 * 24 * 3600);
+function priorityBadge(p) {
+  const c = PRIORITY[p];
+  return `<span class="badge" style="background:${c.bg};color:${c.color};border-color:${c.border}">${c.icon} ${c.label}</span>`;
 }
 
-const INITIAL_INV = [
-  { id: 1, nome: "CDB Nubank 120% CDI", tipo: "cdb",     aporte: 10000, dataInicio: "2025-01-10", taxaPersonalizada: null },
-  { id: 2, nome: "Tesouro Selic 2029",  tipo: "tesouro", aporte: 5000,  dataInicio: "2024-06-01", taxaPersonalizada: null },
-  { id: 3, nome: "LCI Banco Inter",     tipo: "lci",     aporte: 8000,  dataInicio: "2025-03-15", taxaPersonalizada: null },
-];
-
-// ── Componente ticker de rendimento em tempo real ─────────────────────────────
-function TickerRend({ valorAportado, taxaAnual, dataInicio }) {
-  const [rend, setRend] = useState(() => rendimentoAtual(valorAportado, taxaAnual, dataInicio));
-  useEffect(() => {
-    const rps = rendPorSegundo(valorAportado, taxaAnual);
-    const id = setInterval(() => setRend(r => r + rps / 10), 100); // atualiza 10x/s
-    return () => clearInterval(id);
-  }, [valorAportado, taxaAnual, dataInicio]);
-  return <span style={{ fontVariantNumeric: "tabular-nums" }}>{fmt(rend)}</span>;
+function fixaBadge() {
+  return `<span class="badge badge-fixa">📌 Fixa</span>`;
 }
 
+function buildDashboard() {
+  const {despesas,receitas,investimentos} = state;
+  const totRec = receitas.reduce((s,r)=>s+r.valor,0);
+  const totDesp = despesas.reduce((s,d)=>s+d.valor,0);
+  const totFixas = despesas.filter(d=>d.fixa).reduce((s,d)=>s+d.valor,0);
+  const totVar = despesas.filter(d=>!d.fixa).reduce((s,d)=>s+d.valor,0);
+  const saldo = totRec-totDesp;
+  const pagas = despesas.filter(d=>d.pago).length;
+  const totPago = despesas.filter(d=>d.pago).reduce((s,d)=>s+d.valor,0);
+  const totPend = despesas.filter(d=>!d.pago).reduce((s,d)=>s+d.valor,0);
+  const totInv = investimentos.reduce((s,i)=>s+i.aporte,0);
 
-// ── Ticker total de rendimentos (soma de todos) ───────────────────────────────
-function TickerTotalRend({ investimentos, taxaEfetiva }) {
-  const calcTotal = () => investimentos.reduce((s, inv) => s + rendimentoAtual(inv.aporte, taxaEfetiva(inv), inv.dataInicio), 0);
-  const [total, setTotal] = useState(calcTotal);
-  useEffect(() => {
-    const rpsTotal = investimentos.reduce((s, inv) => s + rendPorSegundo(inv.aporte, taxaEfetiva(inv)), 0);
-    const id = setInterval(() => setTotal(t => t + rpsTotal / 10), 100);
-    return () => clearInterval(id);
-  }, [investimentos]);
-  return <span style={{ fontVariantNumeric: "tabular-nums" }}>{fmt(total)}</span>;
+  const vencendo = despesas.filter(d=>!d.pago&&daysUntil(d.vencimento)!==null&&daysUntil(d.vencimento)<=7)
+    .sort((a,b)=>daysUntil(a.vencimento)-daysUntil(b.vencimento)).slice(0,4);
+
+  return `
+  <div class="grid2">
+    <div class="stat-card" style="background:#f0fdf4;border:1px solid #bbf7d020">
+      <div class="stat-label">Receitas</div>
+      <div class="stat-val" style="color:#22c55e">${fmt(totRec)}</div>
+    </div>
+    <div class="stat-card" style="background:#ede9fe;border:1px solid #c4b5fd20">
+      <div class="stat-label">📌 Fixas</div>
+      <div class="stat-val" style="color:#7c3aed">${fmt(totFixas)}</div>
+      <div class="stat-sub" style="color:#a78bfa">${despesas.filter(d=>d.fixa).length} despesas</div>
+    </div>
+    <div class="stat-card" style="background:#f8fafc;border:1px solid #e2e8f020">
+      <div class="stat-label">Variáveis</div>
+      <div class="stat-val" style="color:#475569">${fmt(totVar)}</div>
+    </div>
+    <div class="stat-card" style="background:${saldo>=0?'#eff6ff':'#fef2f2'};border:1px solid #e2e8f020">
+      <div class="stat-label">Saldo Final</div>
+      <div class="stat-val" style="color:${saldo>=0?'#3b82f6':'#ef4444'}">${fmt(saldo)}</div>
+    </div>
+  </div>
+
+  ${investimentos.length>0?`
+  <div class="cta" style="background:linear-gradient(135deg,#065f46,#047857);cursor:pointer" data-tab="investimentos">
+    <div>
+      <div style="font-weight:800;color:#fff;font-size:15px;margin-bottom:2px">📈 Meus Investimentos</div>
+      <div style="font-size:12px;color:#6ee7b7">${investimentos.length} ativo(s) · Aporte: ${fmt(totInv)}</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:10px;color:#6ee7b7;font-weight:700">⚡ Rendendo</div>
+      <div id="ticker-dash" style="font-size:18px;font-weight:800;color:#fff">calculando...</div>
+    </div>
+  </div>`:''}
+
+  <div class="cta" style="background:linear-gradient(135deg,#0f766e,#0d9488);cursor:pointer" data-action="comprovante">
+    <div>
+      <div style="font-weight:800;color:#fff;font-size:15px;margin-bottom:2px">🧾 Enviar Comprovante</div>
+      <div style="font-size:12px;color:#99f6e4">IA lê e registra o pagamento automaticamente</div>
+    </div>
+    <div style="background:#fff;color:#0f766e;border-radius:10px;padding:8px 14px;font-weight:700;font-size:13px;white-space:nowrap">Enviar →</div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px">📈 Pagamentos</div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:8px">${pagas} de ${despesas.length} pagas</div>
+    <div class="prog-wrap">
+      <div class="prog-bar" style="width:${despesas.length?(pagas/despesas.length*100):0}%;background:linear-gradient(90deg,#22c55e,#4ade80)"></div>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:#94a3b8">Pago: ${fmt(totPago)} · Pendente: ${fmt(totPend)}</div>
+  </div>
+
+  ${vencendo.length>0?`
+  <div class="card">
+    <div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px">🚨 Vencendo em Breve</div>
+    ${vencendo.map(d=>`
+    <div class="row">
+      <div>
+        <span style="font-weight:600;font-size:14px">${d.nome}</span>
+        ${d.fixa?fixaBadge():''}
+        ${daysBadge(d.vencimento)}
+      </div>
+      <span style="font-weight:700;color:#ef4444">${fmt(d.valor)}</span>
+    </div>`).join('')}
+  </div>`:''}`;
 }
 
-// ── Ticker patrimônio total (aporte + rendimento) ─────────────────────────────
-function TickerPatrimonio({ investimentos, taxaEfetiva, totalAportado }) {
-  const calcTotal = () => totalAportado + investimentos.reduce((s, inv) => s + rendimentoAtual(inv.aporte, taxaEfetiva(inv), inv.dataInicio), 0);
-  const [total, setTotal] = useState(calcTotal);
-  useEffect(() => {
-    const rpsTotal = investimentos.reduce((s, inv) => s + rendPorSegundo(inv.aporte, taxaEfetiva(inv)), 0);
-    const id = setInterval(() => setTotal(t => t + rpsTotal / 10), 100);
-    return () => clearInterval(id);
-  }, [investimentos, totalAportado]);
-  return <span style={{ fontVariantNumeric: "tabular-nums" }}>{fmt(total)}</span>;
+function buildRanking() {
+  const {despesas,receitas} = state;
+  const totRec = receitas.reduce((s,r)=>s+r.valor,0);
+  const ranking = [...despesas].filter(d=>!d.pago).sort((a,b)=>{
+    const po=PRIORITY[a.prioridade].order-PRIORITY[b.prioridade].order;
+    if(po!==0) return po;
+    return (a.vencimento||'9999').localeCompare(b.vencimento||'9999');
+  });
+  let bal = totRec;
+  const withBal = ranking.map(d=>{bal-=d.valor;return {...d,balAfter:bal}});
+  const pagas = despesas.filter(d=>d.pago);
+
+  return `
+  <div class="flex-between" style="margin-bottom:16px">
+    <div>
+      <div class="section-title">🏆 Ranking de Pagamento</div>
+      <div class="section-sub">Prioridade → Vencimento</div>
+    </div>
+    <button class="btn btn-teal btn-sm" data-action="comprovante">🧾 Comprovante</button>
+  </div>
+
+  ${withBal.length===0?`<div class="card" style="text-align:center;padding:40px;color:#94a3b8">🎉 Todas pagas!</div>`:''}
+
+  ${withBal.map((d,i)=>`
+  <div class="rank-item" style="background:${i===0?'#eff6ff':'#fff'};border-color:${i===0?'#bfdbfe':'#f1f5f9'}">
+    <div class="rank-num" style="background:${i===0?'#3b82f6':i===1?'#64748b':'#e2e8f0'};color:${i<2?'#fff':'#64748b'}">${i+1}</div>
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <span style="font-weight:700;font-size:15px">${d.nome}</span>
+        ${d.fixa?fixaBadge():''}
+      </div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:2px">${d.categoria} · ${fmtDate(d.vencimento)} ${daysBadge(d.vencimento)}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+      ${priorityBadge(d.prioridade)}
+      <span style="font-weight:800;font-size:15px">${fmt(d.valor)}</span>
+      <span style="font-size:11px;color:${d.balAfter>=0?'#22c55e':'#ef4444'}">Saldo: ${fmt(d.balAfter)}</span>
+      <button class="btn btn-success btn-sm" data-action="pagar" data-id="${d.id}">✓ Pagar</button>
+    </div>
+  </div>`).join('')}
+
+  ${pagas.length>0?`
+  <div style="margin-top:16px">
+    <div style="font-size:13px;font-weight:700;color:#94a3b8;margin-bottom:8px">✅ Já Pagas</div>
+    ${pagas.map(d=>`
+    <div style="display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:12px;background:#f0fdf4;border:1px solid #bbf7d0;margin-bottom:6px;opacity:.8">
+      <span>✅</span>
+      <div style="flex:1">
+        <span style="font-weight:600;text-decoration:line-through;color:#64748b">${d.nome}</span>
+        ${d.fixa?fixaBadge():''}
+      </div>
+      <span style="font-weight:700;color:#22c55e">${fmt(d.valor)}</span>
+      <button class="btn btn-ghost btn-sm" data-action="unpagar" data-id="${d.id}">↩</button>
+    </div>`).join('')}
+  </div>`:''}`;
 }
 
-// ── Main App ──────────────────────────────────────────────────────────────────
-export default function App() {
-  const [tab, setTab] = useState("dashboard");
-  const [despesas, setDespesas] = useState(INITIAL_DESPESAS);
-  const [receitas, setReceitas] = useState([
-    { id: 1, nome: "Salário", valor: 5000, data: "2026-06-05", recorrente: true },
-    { id: 2, nome: "Freelance", valor: 800, data: "2026-06-15", recorrente: false },
-  ]);
-  const [showComprovante, setShowComprovante] = useState(false);
-  const [toastMsg, setToastMsg] = useState(null);
-  const [investimentos, setInvestimentos] = useState(INITIAL_INV);
-  const [showInvForm, setShowInvForm] = useState(false);
-  const [editInvId, setEditInvId] = useState(null);
-  const EMPTY_INV = { nome: "", tipo: "cdb", aporte: "", dataInicio: "", taxaPersonalizada: "" };
-  const [novoInv, setNovoInv] = useState(EMPTY_INV);
-
-  const EMPTY_DESPESA = { nome: "", valor: "", vencimento: "", prioridade: "moderado", categoria: "", fixa: false, diaVencimento: "" };
-  const [novaDespesa, setNovaDespesa] = useState(EMPTY_DESPESA);
-  const [novaReceita, setNovaReceita] = useState({ nome: "", valor: "", data: "", recorrente: false });
-  const [showDespesaForm, setShowDespesaForm] = useState(false);
-  const [showReceitaForm, setShowReceitaForm] = useState(false);
-  const [editId, setEditId] = useState(null);
-  const [filtroTipo, setFiltroTipo] = useState("todas");
-
-  const showToast = (msg) => { setToastMsg(msg); setTimeout(() => setToastMsg(null), 3500); };
-
-  const ranking = useMemo(() => [...despesas].filter(d => !d.pago).sort((a, b) => {
-    const pa = PRIORITY_CONFIG[a.prioridade].order, pb = PRIORITY_CONFIG[b.prioridade].order;
-    if (pa !== pb) return pa - pb;
-    return (a.vencimento || "9999").localeCompare(b.vencimento || "9999");
-  }), [despesas]);
-
-  const totalReceitas = receitas.reduce((s, r) => s + r.valor, 0);
-  const totalDespesas = despesas.reduce((s, d) => s + d.valor, 0);
-  const totalFixas = despesas.filter(d => d.fixa).reduce((s, d) => s + d.valor, 0);
-  const totalVariaveis = despesas.filter(d => !d.fixa).reduce((s, d) => s + d.valor, 0);
-  const totalPago = despesas.filter(d => d.pago).reduce((s, d) => s + d.valor, 0);
-  const totalPendente = despesas.filter(d => !d.pago).reduce((s, d) => s + d.valor, 0);
-  const saldo = totalReceitas - totalDespesas;
-
-  const addDespesa = () => {
-    if (!novaDespesa.nome || !novaDespesa.valor) return;
-    const base = { ...novaDespesa, valor: parseFloat(novaDespesa.valor), fixa: !!novaDespesa.fixa, diaVencimento: novaDespesa.fixa ? (parseInt(novaDespesa.diaVencimento) || "") : "" };
-    if (editId) { setDespesas(despesas.map(d => d.id === editId ? { ...d, ...base } : d)); setEditId(null); }
-    else setDespesas([...despesas, { ...base, id: Date.now(), pago: false }]);
-    setNovaDespesa(EMPTY_DESPESA); setShowDespesaForm(false);
-  };
-
-  const addReceita = () => {
-    if (!novaReceita.nome || !novaReceita.valor) return;
-    setReceitas([...receitas, { ...novaReceita, id: Date.now(), valor: parseFloat(novaReceita.valor) }]);
-    setNovaReceita({ nome: "", valor: "", data: "", recorrente: false }); setShowReceitaForm(false);
-  };
-
-  const togglePago = (id) => setDespesas(despesas.map(d => d.id === id ? { ...d, pago: !d.pago } : d));
-  const deleteDespesa = (id) => setDespesas(despesas.filter(d => d.id !== id));
-  const deleteReceita = (id) => setReceitas(receitas.filter(r => r.id !== id));
-
-  const startEdit = (d) => {
-    setNovaDespesa({ nome: d.nome, valor: String(d.valor), vencimento: d.vencimento || "", prioridade: d.prioridade, categoria: d.categoria || "", fixa: d.fixa || false, diaVencimento: d.diaVencimento || "" });
-    setEditId(d.id); setShowDespesaForm(true); setTab("despesas");
-  };
-
-  // ── Investimentos CRUD ────────────────────────────────────────────────────
-  const taxaEfetiva = (inv) => inv.taxaPersonalizada ? parseFloat(inv.taxaPersonalizada) / 100 : TIPOS_INV[inv.tipo]?.taxaAnual ?? 0.10;
-
-  const addInvestimento = () => {
-    if (!novoInv.nome || !novoInv.aporte || !novoInv.dataInicio) return;
-    const base = { ...novoInv, aporte: parseFloat(novoInv.aporte), taxaPersonalizada: novoInv.taxaPersonalizada ? parseFloat(novoInv.taxaPersonalizada) : null };
-    if (editInvId) { setInvestimentos(investimentos.map(i => i.id === editInvId ? { ...i, ...base } : i)); setEditInvId(null); }
-    else setInvestimentos([...investimentos, { ...base, id: Date.now() }]);
-    setNovoInv(EMPTY_INV); setShowInvForm(false);
-  };
-
-  const deleteInv = (id) => setInvestimentos(investimentos.filter(i => i.id !== id));
-
-  const startEditInv = (inv) => {
-    setNovoInv({ nome: inv.nome, tipo: inv.tipo, aporte: String(inv.aporte), dataInicio: inv.dataInicio, taxaPersonalizada: inv.taxaPersonalizada ? String(inv.taxaPersonalizada * 100) : "" });
-    setEditInvId(inv.id); setShowInvForm(true); setTab("investimentos");
-  };
-
-  const handleComprovanteConfirm = (id) => {
-    const d = despesas.find(x => x.id === id);
-    setDespesas(despesas.map(x => x.id === id ? { ...x, pago: true } : x));
-    setShowComprovante(false);
-    showToast(`✅ "${d?.nome}" marcada como paga via comprovante!`);
-  };
-
-  const despesasFiltradas = useMemo(() => {
-    if (filtroTipo === "fixa") return despesas.filter(d => d.fixa);
-    if (filtroTipo === "variavel") return despesas.filter(d => !d.fixa);
-    return despesas;
-  }, [despesas, filtroTipo]);
-
-  const runningBalance = useMemo(() => {
-    let bal = totalReceitas;
-    return ranking.map(d => { bal -= d.valor; return { ...d, balanceAfter: bal }; });
-  }, [ranking, totalReceitas]);
-
-  const S = {
-    app: { fontFamily: "-apple-system,'SF Pro Display','DM Sans',sans-serif", minHeight: "100dvh", background: "#f8fafc", color: "#1e293b", overflowX: "hidden" },
-    header: { background: "linear-gradient(160deg,#1e293b 0%,#0f172a 100%)", color: "#fff", paddingLeft: 20, paddingRight: 20, paddingBottom: 18, display: "flex", alignItems: "center", justifyContent: "space-between" },
-    headerTitle: { fontSize: 19, fontWeight: 800, letterSpacing: -0.5, margin: 0, lineHeight: 1.2 },
-    headerSub: { fontSize: 12, color: "#94a3b8", marginTop: 1 },
-    main: { padding: "16px 16px 0", maxWidth: 600, margin: "0 auto" },
-    card: { background: "#fff", borderRadius: 20, padding: 16, boxShadow: "0 2px 8px rgba(0,0,0,0.06)", border: "1px solid #f1f5f9", marginBottom: 12 },
-    grid4: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 },
-    statCard: (color, bg) => ({ background: bg, borderRadius: 16, padding: "14px 16px", border: `1px solid ${color}20` }),
-    statLabel: { fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, color: "#94a3b8", marginBottom: 3 },
-    statValue: (color) => ({ fontSize: 20, fontWeight: 800, color, letterSpacing: -0.5 }),
-    btn: (v = "primary") => ({
-      background: v === "primary" ? "#3b82f6" : v === "danger" ? "#ef4444" : v === "success" ? "#22c55e" : v === "purple" ? "#7c3aed" : v === "teal" ? "#0d9488" : "#f1f5f9",
-      color: ["primary","danger","success","purple","teal"].includes(v) ? "#fff" : "#475569",
-      border: "none", borderRadius: 12, padding: "10px 18px", fontSize: 14, fontWeight: 700,
-      cursor: "pointer", WebkitAppearance: "none", minHeight: 44,
-    }),
-    input: { width: "100%", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "13px 14px", fontSize: 16, fontFamily: "inherit", outline: "none", boxSizing: "border-box", color: "#1e293b", background: "#fff", WebkitAppearance: "none" },
-    select: { width: "100%", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "13px 14px", fontSize: 16, fontFamily: "inherit", outline: "none", boxSizing: "border-box", color: "#1e293b", background: "#fff", WebkitAppearance: "none" },
-    label: { fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 6, display: "block", textTransform: "uppercase", letterSpacing: 0.5 },
-    row: { display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between", padding: "15px 0", borderBottom: "1px solid #f1f5f9" },
-    rankItem: (i) => ({ display: "flex", gap: 10, alignItems: "center", padding: "14px 14px", borderRadius: 16, background: i === 0 ? "#eff6ff" : "#fff", border: i === 0 ? "1.5px solid #bfdbfe" : "1px solid #f1f5f9", marginBottom: 10 }),
-    rankNum: (i) => ({ width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 13, background: i === 0 ? "#3b82f6" : i === 1 ? "#64748b" : "#e2e8f0", color: i < 2 ? "#fff" : "#64748b", flexShrink: 0 }),
-  };
-
-  const InputField = ({ label, ...props }) => (
-    <div><label style={S.label}>{label}</label><input style={S.input} {...props} /></div>
-  );
-
-  return (
-    <div style={S.app}>
-      <GlobalStyle />
-      {/* Toast */}
-      {toastMsg && (
-        <div style={{ position: "fixed", top: "calc(env(safe-area-inset-top) + 16px)", right: 16, zIndex: 2000, background: "#1e293b", color: "#fff", borderRadius: 12, padding: "12px 20px", fontWeight: 600, fontSize: 14, boxShadow: "0 8px 30px rgba(0,0,0,0.25)", maxWidth: 320 }}>
-          {toastMsg}
+function buildDespesas() {
+  const {despesas,filtro} = state;
+  const list = filtro==='fixa'?despesas.filter(d=>d.fixa):filtro==='variavel'?despesas.filter(d=>!d.fixa):despesas;
+  return `
+  <div class="flex-between" style="margin-bottom:16px">
+    <div class="section-title">📋 Despesas</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-teal btn-sm" data-action="comprovante">🧾</button>
+      <button class="btn btn-primary btn-sm" data-action="modal-despesa">+ Nova</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    ${[['todas','Todas'],['fixa','📌 Fixas'],['variavel','🔄 Variáveis']].map(([v,l])=>
+      `<button class="btn btn-sm ${state.filtro===v?'btn-primary':'btn-ghost'}" data-filtro="${v}">${l}</button>`
+    ).join('')}
+  </div>
+  <div class="card">
+    ${list.length===0?'<p style="color:#94a3b8;text-align:center;padding:20px">Nenhuma despesa.</p>':''}
+    ${list.map(d=>`
+    <div class="row" style="opacity:${d.pago?.6:1}">
+      <div style="display:flex;gap:10px;align-items:center;flex:1;min-width:0">
+        <input type="checkbox" ${d.pago?'checked':''} data-action="toggle" data-id="${d.id}" style="width:18px;height:18px;cursor:pointer;flex-shrink:0">
+        <div style="min-width:0">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <span style="font-weight:600;font-size:14px;${d.pago?'text-decoration:line-through;color:#94a3b8':''}">${d.nome}</span>
+            ${d.fixa?fixaBadge():''}
+          </div>
+          <div style="font-size:12px;color:#94a3b8">${d.categoria}${d.fixa&&d.diaVenc?` · Dia ${d.diaVenc}`:d.vencimento?` · ${fmtDate(d.vencimento)}`:''} ${daysBadge(d.vencimento)}</div>
         </div>
-      )}
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+        ${priorityBadge(d.prioridade)}
+        <span style="font-weight:700;font-size:14px">${fmt(d.valor)}</span>
+        <button class="btn btn-ghost btn-sm" data-action="edit-despesa" data-id="${d.id}">✏️</button>
+        <button class="btn btn-danger btn-sm" data-action="del-despesa" data-id="${d.id}">🗑</button>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
 
-      {/* Comprovante Modal */}
-      {showComprovante && (
-        <ComprovanteModal
-          despesas={despesas}
-          onClose={() => setShowComprovante(false)}
-          onConfirm={handleComprovanteConfirm}
-        />
-      )}
-
-      <header className="app-header" style={S.header}>
+function buildFixas() {
+  const {despesas,receitas} = state;
+  const fixas = [...despesas.filter(d=>d.fixa)].sort((a,b)=>(a.diaVenc||99)-(b.diaVenc||99));
+  const totFixas = fixas.reduce((s,d)=>s+d.valor,0);
+  const totRec = receitas.reduce((s,r)=>s+r.valor,0);
+  return `
+  <div class="flex-between" style="margin-bottom:12px">
+    <div>
+      <div class="section-title">📌 Despesas Fixas</div>
+      <div class="section-sub">Repetem todo mês</div>
+    </div>
+    <button class="btn btn-purple btn-sm" data-action="modal-fixa">+ Nova Fixa</button>
+  </div>
+  <div class="grid2" style="margin-bottom:12px">
+    <div class="stat-card" style="background:#ede9fe">
+      <div class="stat-label">Total/mês</div>
+      <div class="stat-val" style="color:#7c3aed">${fmt(totFixas)}</div>
+    </div>
+    <div class="stat-card" style="background:#eff6ff">
+      <div class="stat-label">% da Renda</div>
+      <div class="stat-val" style="color:#3b82f6">${totRec?((totFixas/totRec)*100).toFixed(0):0}%</div>
+    </div>
+  </div>
+  <div class="card">
+    ${fixas.length===0?'<p style="color:#94a3b8;text-align:center;padding:20px">Nenhuma despesa fixa.</p>':''}
+    ${fixas.map(d=>`
+    <div class="row">
+      <div style="display:flex;gap:12px;align-items:center;flex:1">
+        <div style="width:38px;height:38px;border-radius:10px;background:#ede9fe;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;font-size:13px;color:#7c3aed">${d.diaVenc||'?'}</div>
         <div>
-          <h1 style={S.headerTitle}>💰 Planejamento Financeiro</h1>
-          <p style={S.headerSub}>Victor Hugo</p>
+          <div style="font-weight:600;font-size:14px">${d.nome}</div>
+          <div style="font-size:12px;color:#94a3b8">${d.categoria}${d.diaVenc?` · Todo dia ${d.diaVenc}`:''}</div>
         </div>
-        <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Saldo Mensal</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: saldo >= 0 ? "#4ade80" : "#f87171", letterSpacing: -0.5 }}>{fmt(saldo)}</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${priorityBadge(d.prioridade)}
+        <span style="font-weight:800;font-size:15px">${fmt(d.valor)}</span>
+        <button class="btn btn-ghost btn-sm" data-action="edit-despesa" data-id="${d.id}">✏️</button>
+        <button class="btn btn-danger btn-sm" data-action="del-despesa" data-id="${d.id}">🗑</button>
+      </div>
+    </div>`).join('')}
+    ${fixas.length>0?`<div style="padding-top:12px;display:flex;justify-content:space-between;font-weight:700"><span>Total/mês</span><span style="color:#7c3aed">${fmt(totFixas)}</span></div>`:''}
+  </div>`;
+}
+
+function buildReceitas() {
+  const {receitas} = state;
+  const tot = receitas.reduce((s,r)=>s+r.valor,0);
+  return `
+  <div class="flex-between" style="margin-bottom:16px">
+    <div class="section-title">💵 Receitas</div>
+    <button class="btn btn-success btn-sm" data-action="modal-receita">+ Nova</button>
+  </div>
+  <div class="card" style="background:#f0fdf4;border:1px solid #bbf7d0;margin-bottom:12px">
+    <div class="flex-between">
+      <span style="font-weight:700;color:#16a34a">Total de Receitas</span>
+      <span style="font-size:22px;font-weight:800;color:#16a34a">${fmt(tot)}</span>
+    </div>
+  </div>
+  <div class="card">
+    ${receitas.length===0?'<p style="color:#94a3b8;text-align:center;padding:20px">Nenhuma receita.</p>':''}
+    ${receitas.map(r=>`
+    <div class="row">
+      <div>
+        <div style="font-weight:600;font-size:14px">${r.nome} ${r.recorrente?'<span style="font-size:11px;background:#dbeafe;color:#2563eb;border-radius:10px;padding:2px 8px;font-weight:700">Recorrente</span>':''}</div>
+        <div style="font-size:12px;color:#94a3b8">${fmtDate(r.data)}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-weight:700;color:#22c55e;font-size:16px">${fmt(r.valor)}</span>
+        <button class="btn btn-danger btn-sm" data-action="del-receita" data-id="${r.id}">🗑</button>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function buildInvest() {
+  const {investimentos} = state;
+  const totAporte = investimentos.reduce((s,i)=>s+i.aporte,0);
+  return `
+  <div class="flex-between" style="margin-bottom:16px">
+    <div>
+      <div class="section-title">📈 Investimentos</div>
+      <div class="section-sub">Rendimento em tempo real</div>
+    </div>
+    <button class="btn btn-success btn-sm" data-action="modal-invest">+ Novo</button>
+  </div>
+
+  <div class="grid2" style="margin-bottom:12px">
+    <div class="stat-card" style="background:linear-gradient(135deg,#065f46,#047857)">
+      <div class="stat-label" style="color:#6ee7b7">Total Investido</div>
+      <div class="stat-val" style="color:#fff">${fmt(totAporte)}</div>
+    </div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#1d4ed8,#2563eb)">
+      <div class="stat-label" style="color:#bfdbfe">⚡ Rendimento</div>
+      <div class="stat-val" style="color:#fff" id="ticker-total">...</div>
+    </div>
+  </div>
+
+  ${investimentos.length===0?`<div class="card" style="text-align:center;padding:40px;color:#94a3b8">Nenhum investimento.<br><span style="font-size:13px">Clique em "+ Novo" para começar.</span></div>`:''}
+
+  ${investimentos.map(inv=>{
+    const tipo = TIPOS_INV[inv.tipo]||TIPOS_INV.outro;
+    const taxa = inv.taxaCustom||tipo.taxa;
+    const ra = rendAcum(inv.aporte,taxa,inv.inicio);
+    const dias = Math.max(0,Math.floor((Date.now()-new Date(inv.inicio+'T00:00:00').getTime())/86400000));
+    const rendMes = inv.aporte*(Math.pow(1+taxa,1/12)-1);
+    const pct = Math.min(100,(ra/inv.aporte)*100*5);
+    return `
+    <div class="inv-card" style="border-left:4px solid ${tipo.cor}">
+      <div class="flex-between" style="margin-bottom:10px">
+        <div style="display:flex;gap:10px;align-items:center">
+          <span style="font-size:24px">${tipo.icon}</span>
+          <div>
+            <div style="font-weight:800;font-size:14px">${inv.nome}</div>
+            <div style="font-size:11px;color:#94a3b8">${tipo.label} · ${(taxa*100).toFixed(2)}% a.a. · ${dias}d</div>
+          </div>
         </div>
-      </header>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" data-action="edit-invest" data-id="${inv.id}">✏️</button>
+          <button class="btn btn-danger btn-sm" data-action="del-invest" data-id="${inv.id}">🗑</button>
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;margin-bottom:4px">
+          <span>Aporte: ${fmt(inv.aporte)}</span>
+          <span>${((ra/inv.aporte)*100).toFixed(3)}%</span>
+        </div>
+        <div class="prog-wrap" style="height:6px">
+          <div class="prog-bar" style="width:${pct}%;background:${tipo.cor}"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:space-between;align-items:center">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:10px 14px">
+          <div style="font-size:10px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:.5px">⚡ Rendimento total</div>
+          <div class="ticker" style="color:#16a34a" id="ticker-${inv.id}">${fmt(ra)}</div>
+          <div style="font-size:11px;color:#64748b">~${fmt(rendMes)}/mês</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:#94a3b8">Patrimônio</div>
+          <div style="font-size:16px;font-weight:800;color:${tipo.cor}">${fmt(inv.aporte+ra)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('')}
 
-      <main style={S.main} className="tab-content">
+  ${investimentos.length>0?`<div style="margin-top:8px;padding:10px 14px;background:#fff7ed;border-radius:10px;border:1px solid #fed7aa;font-size:12px;color:#92400e">⚠️ Rendimentos estimados. Consulte sua instituição para valores exatos.</div>`:''}`;
+}
 
-        {/* DASHBOARD */}
-        {tab === "dashboard" && (
-          <div>
-            <div style={S.grid4}>
-              <div style={S.statCard("#22c55e","#f0fdf4")}><div style={S.statLabel}>Receitas</div><div style={S.statValue("#22c55e")}>{fmt(totalReceitas)}</div></div>
-              <div style={S.statCard("#7c3aed","#ede9fe")}><div style={S.statLabel}>📌 Fixas</div><div style={S.statValue("#7c3aed")}>{fmt(totalFixas)}</div><div style={{ fontSize: 11, color: "#a78bfa", marginTop: 2 }}>{despesas.filter(d => d.fixa).length} despesas</div></div>
-              <div style={S.statCard("#64748b","#f8fafc")}><div style={S.statLabel}>Variáveis</div><div style={S.statValue("#475569")}>{fmt(totalVariaveis)}</div></div>
-              <div style={S.statCard(saldo >= 0 ? "#3b82f6" : "#ef4444", saldo >= 0 ? "#eff6ff" : "#fef2f2")}><div style={S.statLabel}>Saldo Final</div><div style={S.statValue(saldo >= 0 ? "#3b82f6" : "#ef4444")}>{fmt(saldo)}</div></div>
-            </div>
+function buildModal() {
+  const {showModal,form,editId} = state;
 
-            {/* Investimentos resumo no dashboard */}
-            {investimentos.length > 0 && (
-              <div style={{ ...S.card, marginBottom: 16, background: "linear-gradient(135deg,#065f46,#047857)", border: "none", cursor: "pointer" }} onClick={() => setTab("investimentos")}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-                  <div>
-                    <div style={{ fontWeight: 800, color: "#fff", fontSize: 15, marginBottom: 2 }}>📈 Meus Investimentos</div>
-                    <div style={{ fontSize: 13, color: "#6ee7b7" }}>{investimentos.length} ativo{investimentos.length > 1 ? "s" : ""} · Aporte total: {fmt(investimentos.reduce((s,i)=>s+i.aporte,0))}</div>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 11, color: "#6ee7b7", fontWeight: 700 }}>⚡ Rendendo agora</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>
-                      <TickerTotalRend investimentos={investimentos} taxaEfetiva={taxaEfetiva} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Comprovante CTA */}
-            <div style={{ ...S.card, marginBottom: 16, background: "linear-gradient(135deg, #0f766e, #0d9488)", border: "none", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-              <div>
-                <div style={{ fontWeight: 800, color: "#fff", fontSize: 15, marginBottom: 2 }}>🧾 Enviar Comprovante</div>
-                <div style={{ fontSize: 13, color: "#99f6e4" }}>A IA lê o comprovante e registra o pagamento automaticamente</div>
-              </div>
-              <button style={{ background: "#fff", color: "#0f766e", border: "none", borderRadius: 10, padding: "10px 20px", fontWeight: 700, fontSize: 13, cursor: "pointer" }} onClick={() => setShowComprovante(true)}>
-                Enviar agora →
-              </button>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <div style={S.card}>
-                <h3 style={{ margin: "0 0 14px", fontSize: 14, fontWeight: 700, color: "#475569" }}>📈 Progresso de Pagamentos</h3>
-                <div style={{ marginBottom: 8, fontSize: 13, color: "#64748b" }}>{despesas.filter(d => d.pago).length} de {despesas.length} pagas</div>
-                <div style={{ background: "#f1f5f9", borderRadius: 99, height: 10, overflow: "hidden" }}>
-                  <div style={{ width: `${despesas.length ? (despesas.filter(d => d.pago).length / despesas.length) * 100 : 0}%`, background: "linear-gradient(90deg,#22c55e,#4ade80)", height: "100%", borderRadius: 99, transition: "width .5s" }} />
-                </div>
-                <div style={{ marginTop: 12, fontSize: 12, color: "#94a3b8" }}>Pago: {fmt(totalPago)} / Pendente: {fmt(totalPendente)}</div>
-              </div>
-              <div style={S.card}>
-                <h3 style={{ margin: "0 0 14px", fontSize: 14, fontWeight: 700, color: "#475569" }}>🚨 Vencendo em Breve</h3>
-                {despesas.filter(d => !d.pago && daysUntil(d.vencimento) !== null && daysUntil(d.vencimento) <= 7)
-                  .sort((a, b) => (daysUntil(a.vencimento) || 0) - (daysUntil(b.vencimento) || 0))
-                  .slice(0, 4).map(d => (
-                    <div key={d.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid #f8fafc" }}>
-                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                        <span style={{ fontSize: 13, fontWeight: 600 }}>{d.nome}</span>
-                        {d.fixa && <span style={{ fontSize: 10, background: "#ede9fe", color: "#7c3aed", borderRadius: 8, padding: "1px 6px", fontWeight: 700 }}>FIXA</span>}
-                        <DaysBadge dateStr={d.vencimento} />
-                      </div>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: "#ef4444" }}>{fmt(d.valor)}</span>
-                    </div>
-                  ))}
-                {despesas.filter(d => !d.pago && daysUntil(d.vencimento) !== null && daysUntil(d.vencimento) <= 7).length === 0 && (
-                  <p style={{ color: "#94a3b8", fontSize: 13 }}>Nenhuma despesa vencendo em 7 dias 🎉</p>
-                )}
-              </div>
-            </div>
+  if(showModal==='despesa'||showModal==='fixa') {
+    const isFixa = showModal==='fixa'||form.fixa;
+    return `
+    <div class="overlay" id="modal-overlay">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div style="font-size:16px;font-weight:800;margin-bottom:16px">${editId?'✏️ Editar':'➕ Nova'} Despesa</div>
+        <div class="form-group"><label class="form-label">Nome</label><input class="form-input" id="f-nome" placeholder="Ex: Aluguel" value="${form.nome||''}"></div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" id="f-valor" type="number" placeholder="0,00" value="${form.valor||''}"></div>
+          <div class="form-group"><label class="form-label">Prioridade</label>
+            <select class="form-select" id="f-prio">
+              ${Object.entries(PRIORITY).map(([k,v])=>`<option value="${k}" ${(form.prioridade||'moderado')===k?'selected':''}>${v.icon} ${v.label}</option>`).join('')}
+            </select>
           </div>
-        )}
+        </div>
+        <div class="form-group"><label class="form-label">Categoria</label><input class="form-input" id="f-cat" placeholder="Ex: Moradia, Saúde..." value="${form.categoria||''}"></div>
 
-        {/* RANKING */}
-        {tab === "ranking" && (
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>🏆 Ranking de Pagamento</h2>
-                <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>Ordem: prioridade → vencimento</p>
-              </div>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <button style={{ ...S.btn("teal"), fontSize: 12, padding: "7px 12px" }} onClick={() => setShowComprovante(true)}>🧾 Comprovante</button>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 11, color: "#94a3b8" }}>Saldo</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: "#22c55e" }}>{fmt(totalReceitas)}</div>
-                </div>
-              </div>
+        <div class="form-group">
+          <div class="toggle-wrap" id="toggle-fixa" style="background:${isFixa?'#ede9fe':'#f8fafc'};border:1.5px solid ${isFixa?'#c4b5fd':'#e2e8f0'}">
+            <div class="toggle-track" style="background:${isFixa?'#7c3aed':'#e2e8f0'}">
+              <div class="toggle-thumb" style="left:${isFixa?'20px':'2px'}"></div>
             </div>
-
-            {ranking.length === 0 && <div style={{ ...S.card, textAlign: "center", padding: 40, color: "#94a3b8" }}>🎉 Todas as despesas foram pagas!</div>}
-
-            {runningBalance.map((d, i) => (
-              <div key={d.id} style={{ ...S.rankItem(i), flexWrap: "wrap" }}>
-                <div style={S.rankNum(i)}>{i + 1}</div>
-                <div style={{ flex: 1, minWidth: 140 }}>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-                    <span style={{ fontWeight: 700, fontSize: 15 }}>{d.nome}</span>
-                    {d.fixa && <FixaBadge />}
-                  </div>
-                  <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>
-                    {d.categoria && <span>{d.categoria} · </span>}Vence: {fmtDate(d.vencimento)} <DaysBadge dateStr={d.vencimento} />
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                  <Badge priority={d.prioridade} />
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontWeight: 800, fontSize: 16 }}>{fmt(d.valor)}</div>
-                    <div style={{ fontSize: 11, color: d.balanceAfter >= 0 ? "#22c55e" : "#ef4444" }}>Saldo após: {fmt(d.balanceAfter)}</div>
-                  </div>
-                  <button style={S.btn("success")} onClick={() => togglePago(d.id)}>✓ Pagar</button>
-                </div>
-              </div>
-            ))}
-
-            {despesas.filter(d => d.pago).length > 0 && (
-              <div style={{ marginTop: 24 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: "#94a3b8", marginBottom: 8 }}>✅ Já Pagas</h3>
-                {despesas.filter(d => d.pago).map(d => (
-                  <div key={d.id} style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 16px", borderRadius: 10, background: "#f0fdf4", border: "1px solid #bbf7d0", marginBottom: 6, opacity: 0.8 }}>
-                    <span style={{ fontSize: 18 }}>✅</span>
-                    <div style={{ flex: 1, display: "flex", gap: 6, alignItems: "center" }}>
-                      <span style={{ fontWeight: 600, textDecoration: "line-through", color: "#64748b" }}>{d.nome}</span>
-                      {d.fixa && <FixaBadge />}
-                    </div>
-                    <span style={{ fontWeight: 700, color: "#22c55e" }}>{fmt(d.valor)}</span>
-                    <button style={{ ...S.btn("ghost"), padding: "6px 10px" }} onClick={() => togglePago(d.id)}>↩ Desfazer</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* DESPESAS */}
-        {tab === "despesas" && (
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>📋 Despesas</h2>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button style={{ ...S.btn("teal"), fontSize: 12, padding: "7px 12px" }} onClick={() => setShowComprovante(true)}>🧾 Comprovante</button>
-                <button style={S.btn("primary")} onClick={() => { setShowDespesaForm(!showDespesaForm); setEditId(null); setNovaDespesa(EMPTY_DESPESA); }}>
-                  {showDespesaForm ? "✕ Cancelar" : "+ Nova Despesa"}
-                </button>
-              </div>
-            </div>
-
-            {showDespesaForm && (
-              <div style={{ ...S.card, marginBottom: 16, border: "1.5px solid #bfdbfe", background: "#eff6ff" }}>
-                <h3 style={{ margin: "0 0 14px", fontSize: 14, fontWeight: 700 }}>{editId ? "✏️ Editar Despesa" : "➕ Nova Despesa"}</h3>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <InputField label="Nome" placeholder="Ex: Aluguel" value={novaDespesa.nome} onChange={e => setNovaDespesa({ ...novaDespesa, nome: e.target.value })} />
-                  <InputField label="Valor (R$)" type="number" placeholder="0,00" value={novaDespesa.valor} onChange={e => setNovaDespesa({ ...novaDespesa, valor: e.target.value })} />
-                  <div style={{ gridColumn: "1 / -1" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, background: novaDespesa.fixa ? "#ede9fe" : "#f8fafc", border: `1.5px solid ${novaDespesa.fixa ? "#c4b5fd" : "#e2e8f0"}`, cursor: "pointer" }}
-                      onClick={() => setNovaDespesa({ ...novaDespesa, fixa: !novaDespesa.fixa, diaVencimento: "" })}>
-                      <div style={{ width: 36, height: 20, borderRadius: 99, background: novaDespesa.fixa ? "#7c3aed" : "#e2e8f0", position: "relative", flexShrink: 0 }}>
-                        <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#fff", position: "absolute", top: 2, left: novaDespesa.fixa ? 18 : 2, transition: "left .2s", boxShadow: "0 1px 3px rgba(0,0,0,.2)" }} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: novaDespesa.fixa ? "#7c3aed" : "#475569" }}>📌 Despesa Fixa</div>
-                        <div style={{ fontSize: 11, color: "#94a3b8" }}>Repete todo mês no mesmo dia</div>
-                      </div>
-                    </div>
-                  </div>
-                  {novaDespesa.fixa
-                    ? <InputField label="Dia de Vencimento (todo mês)" type="number" placeholder="Ex: 10" min="1" max="31" value={novaDespesa.diaVencimento} onChange={e => setNovaDespesa({ ...novaDespesa, diaVencimento: e.target.value })} />
-                    : <InputField label="Data de Vencimento" type="date" value={novaDespesa.vencimento} onChange={e => setNovaDespesa({ ...novaDespesa, vencimento: e.target.value })} />
-                  }
-                  <div>
-                    <label style={S.label}>Prioridade</label>
-                    <select style={S.select} value={novaDespesa.prioridade} onChange={e => setNovaDespesa({ ...novaDespesa, prioridade: e.target.value })}>
-                      {Object.entries(PRIORITY_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}
-                    </select>
-                  </div>
-                  <InputField label="Categoria" placeholder="Ex: Moradia, Saúde..." value={novaDespesa.categoria} onChange={e => setNovaDespesa({ ...novaDespesa, categoria: e.target.value })} />
-                </div>
-                <div style={{ marginTop: 12 }}>
-                  <button style={S.btn("primary")} onClick={addDespesa}>{editId ? "💾 Salvar" : "✓ Adicionar"}</button>
-                </div>
-              </div>
-            )}
-
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-              {[["todas","Todas"],["fixa","📌 Fixas"],["variavel","🔄 Variáveis"]].map(([v, l]) => (
-                <button key={v} style={{ ...S.btn(filtroTipo === v ? "primary" : "ghost"), padding: "6px 14px", fontSize: 12 }} onClick={() => setFiltroTipo(v)}>{l}</button>
-              ))}
-            </div>
-
-            <div style={S.card}>
-              {despesasFiltradas.length === 0 && <p style={{ color: "#94a3b8", textAlign: "center", padding: 20 }}>Nenhuma despesa encontrada.</p>}
-              {despesasFiltradas.map(d => (
-                <div key={d.id} style={{ ...S.row, opacity: d.pago ? 0.6 : 1 }}>
-                  <div style={{ display: "flex", gap: 10, alignItems: "center", flex: 1 }}>
-                    <input type="checkbox" checked={d.pago} onChange={() => togglePago(d.id)} style={{ width: 16, height: 16, cursor: "pointer" }} />
-                    <div>
-                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                        <span style={{ fontWeight: 600, textDecoration: d.pago ? "line-through" : "none", color: d.pago ? "#94a3b8" : "#1e293b" }}>{d.nome}</span>
-                        {d.fixa && <FixaBadge />}
-                      </div>
-                      <div style={{ fontSize: 12, color: "#94a3b8" }}>
-                        {d.categoria}{d.fixa && d.diaVencimento ? ` · Todo dia ${d.diaVencimento}` : d.vencimento ? ` · ${fmtDate(d.vencimento)}` : ""}{" "}<DaysBadge dateStr={d.vencimento} />
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <Badge priority={d.prioridade} />
-                    <span style={{ fontWeight: 700, minWidth: 80, textAlign: "right" }}>{fmt(d.valor)}</span>
-                    <button style={{ ...S.btn("ghost"), padding: "6px 10px" }} onClick={() => startEdit(d)}>✏️</button>
-                    <button style={{ ...S.btn("danger"), padding: "6px 10px" }} onClick={() => deleteDespesa(d.id)}>🗑</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ABA FIXAS */}
-        {tab === "fixas" && (
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>📌 Despesas Fixas</h2>
-                <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>Despesas que se repetem todo mês</p>
-              </div>
-              <button style={S.btn("purple")} onClick={() => { setTab("despesas"); setNovaDespesa({ ...EMPTY_DESPESA, fixa: true }); setShowDespesaForm(true); }}>+ Nova Fixa</button>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginBottom: 16 }}>
-              <div style={S.statCard("#7c3aed","#ede9fe")}><div style={S.statLabel}>Total Fixo/mês</div><div style={S.statValue("#7c3aed")}>{fmt(totalFixas)}</div></div>
-              <div style={S.statCard("#64748b","#f8fafc")}><div style={S.statLabel}>Qtd. Fixas</div><div style={S.statValue("#475569")}>{despesas.filter(d => d.fixa).length}</div></div>
-              <div style={S.statCard("#3b82f6","#eff6ff")}><div style={S.statLabel}>% da Renda</div><div style={S.statValue("#3b82f6")}>{totalReceitas ? ((totalFixas / totalReceitas) * 100).toFixed(0) : 0}%</div></div>
-            </div>
-            <div style={S.card}>
-              <h3 style={{ margin: "0 0 14px", fontSize: 13, fontWeight: 700, color: "#64748b" }}>Ordenadas por dia de vencimento</h3>
-              {despesas.filter(d => d.fixa).length === 0 && <p style={{ color: "#94a3b8", textAlign: "center", padding: 20 }}>Nenhuma despesa fixa cadastrada.</p>}
-              {[...despesas.filter(d => d.fixa)].sort((a, b) => (a.diaVencimento || 99) - (b.diaVencimento || 99)).map(d => (
-                <div key={d.id} style={{ ...S.row }}>
-                  <div style={{ display: "flex", gap: 12, alignItems: "center", flex: 1 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "#ede9fe", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <span style={{ fontSize: 13, fontWeight: 800, color: "#7c3aed" }}>{d.diaVencimento || "?"}</span>
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{d.nome}</div>
-                      <div style={{ fontSize: 12, color: "#94a3b8" }}>{d.categoria}{d.diaVencimento ? ` · Todo dia ${d.diaVencimento} de cada mês` : " · Dia não definido"}</div>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <Badge priority={d.prioridade} />
-                    <span style={{ fontWeight: 800, fontSize: 16 }}>{fmt(d.valor)}</span>
-                    <button style={{ ...S.btn("ghost"), padding: "6px 10px" }} onClick={() => startEdit(d)}>✏️</button>
-                    <button style={{ ...S.btn("danger"), padding: "6px 10px" }} onClick={() => deleteDespesa(d.id)}>🗑</button>
-                  </div>
-                </div>
-              ))}
-              {despesas.filter(d => d.fixa).length > 0 && (
-                <div style={{ marginTop: 14, padding: "12px 0 0", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#475569" }}>Total comprometido por mês</span>
-                  <span style={{ fontSize: 18, fontWeight: 800, color: "#7c3aed" }}>{fmt(totalFixas)}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* RECEITAS */}
-        {tab === "receitas" && (
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>💵 Receitas</h2>
-              <button style={S.btn("success")} onClick={() => setShowReceitaForm(!showReceitaForm)}>
-                {showReceitaForm ? "✕ Cancelar" : "+ Nova Receita"}
-              </button>
-            </div>
-            {showReceitaForm && (
-              <div style={{ ...S.card, marginBottom: 16, border: "1.5px solid #bbf7d0", background: "#f0fdf4" }}>
-                <h3 style={{ margin: "0 0 14px", fontSize: 14, fontWeight: 700 }}>➕ Nova Receita</h3>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <InputField label="Nome" placeholder="Ex: Salário" value={novaReceita.nome} onChange={e => setNovaReceita({ ...novaReceita, nome: e.target.value })} />
-                  <InputField label="Valor (R$)" type="number" value={novaReceita.valor} onChange={e => setNovaReceita({ ...novaReceita, valor: e.target.value })} />
-                  <InputField label="Data" type="date" value={novaReceita.data} onChange={e => setNovaReceita({ ...novaReceita, data: e.target.value })} />
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 20 }}>
-                    <input type="checkbox" id="rec" checked={novaReceita.recorrente} onChange={e => setNovaReceita({ ...novaReceita, recorrente: e.target.checked })} />
-                    <label htmlFor="rec" style={{ fontSize: 13, cursor: "pointer" }}>Recorrente (mensal)</label>
-                  </div>
-                </div>
-                <div style={{ marginTop: 12 }}>
-                  <button style={S.btn("success")} onClick={addReceita}>✓ Adicionar</button>
-                </div>
-              </div>
-            )}
-            <div style={{ ...S.card, marginBottom: 16, background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "#16a34a" }}>Total de Receitas</span>
-                <span style={{ fontSize: 24, fontWeight: 800, color: "#16a34a" }}>{fmt(totalReceitas)}</span>
-              </div>
-            </div>
-            <div style={S.card}>
-              {receitas.length === 0 && <p style={{ color: "#94a3b8", textAlign: "center", padding: 20 }}>Nenhuma receita cadastrada.</p>}
-              {receitas.map(r => (
-                <div key={r.id} style={S.row}>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{r.nome} {r.recorrente && <span style={{ fontSize: 11, background: "#dbeafe", color: "#2563eb", borderRadius: 10, padding: "2px 8px", fontWeight: 700 }}>Recorrente</span>}</div>
-                    <div style={{ fontSize: 12, color: "#94a3b8" }}>{fmtDate(r.data)}</div>
-                  </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <span style={{ fontWeight: 700, color: "#22c55e", fontSize: 16 }}>{fmt(r.valor)}</span>
-                    <button style={{ ...S.btn("danger"), padding: "6px 10px" }} onClick={() => deleteReceita(r.id)}>🗑</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* INVESTIMENTOS */}
-        {tab === "investimentos" && (() => {
-          const totalAportado = investimentos.reduce((s, i) => s + i.aporte, 0);
-          const rendTotalEst = investimentos.reduce((s, inv) => s + rendimentoAtual(inv.aporte, taxaEfetiva(inv), inv.dataInicio), 0);
-          const patrimonioEst = totalAportado + rendTotalEst;
-
-          return (
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                <div>
-                  <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>📈 Investimentos</h2>
-                  <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>Rendimento acumulado em tempo real</p>
-                </div>
-                <button style={S.btn("success")} onClick={() => { setShowInvForm(!showInvForm); setEditInvId(null); setNovoInv(EMPTY_INV); }}>
-                  {showInvForm ? "✕ Cancelar" : "+ Novo Investimento"}
-                </button>
-              </div>
+              <div style="font-size:13px;font-weight:700;color:${isFixa?'#7c3aed':'#475569'}">📌 Despesa Fixa</div>
+              <div style="font-size:11px;color:#94a3b8">Repete todo mês</div>
+            </div>
+          </div>
+        </div>
 
-              {/* Cards resumo */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 16 }}>
-                <div style={{ background: "linear-gradient(135deg,#065f46,#047857)", borderRadius: 14, padding: "16px 18px" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#6ee7b7", textTransform: "uppercase", letterSpacing: 1 }}>Total Investido</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: "#fff", marginTop: 4 }}>{fmt(totalAportado)}</div>
-                </div>
-                <div style={{ background: "linear-gradient(135deg,#1d4ed8,#2563eb)", borderRadius: 14, padding: "16px 18px" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#bfdbfe", textTransform: "uppercase", letterSpacing: 1 }}>Rendimento Acum.</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: "#fff", marginTop: 4 }}>
-                    <TickerTotalRend investimentos={investimentos} taxaEfetiva={taxaEfetiva} />
-                  </div>
-                </div>
-                <div style={{ background: "linear-gradient(135deg,#6d28d9,#7c3aed)", borderRadius: 14, padding: "16px 18px" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#ddd6fe", textTransform: "uppercase", letterSpacing: 1 }}>Patrimônio Total</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: "#fff", marginTop: 4 }}>
-                    <TickerPatrimonio investimentos={investimentos} taxaEfetiva={taxaEfetiva} totalAportado={totalAportado} />
-                  </div>
-                </div>
-                <div style={S.statCard("#f59e0b","#fffbeb")}>
-                  <div style={S.statLabel}>Qtd. Ativos</div>
-                  <div style={S.statValue("#d97706")}>{investimentos.length}</div>
-                </div>
-              </div>
+        ${isFixa
+          ?`<div class="form-group"><label class="form-label">Dia de Vencimento (todo mês)</label><input class="form-input" id="f-dia" type="number" min="1" max="31" placeholder="Ex: 10" value="${form.diaVenc||''}"></div>`
+          :`<div class="form-group"><label class="form-label">Data de Vencimento</label><input class="form-input" id="f-venc" type="date" value="${form.vencimento||''}"></div>`
+        }
 
-              {/* Formulário */}
-              {showInvForm && (
-                <div style={{ ...S.card, marginBottom: 16, border: "1.5px solid #bbf7d0", background: "#f0fdf4" }}>
-                  <h3 style={{ margin: "0 0 14px", fontSize: 14, fontWeight: 700 }}>{editInvId ? "✏️ Editar Investimento" : "➕ Novo Investimento"}</h3>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                    <InputField label="Nome / Descrição" placeholder="Ex: CDB Nubank 120% CDI" value={novoInv.nome} onChange={e => setNovoInv({ ...novoInv, nome: e.target.value })} />
-                    <div>
-                      <label style={S.label}>Tipo</label>
-                      <select style={S.select} value={novoInv.tipo} onChange={e => setNovoInv({ ...novoInv, tipo: e.target.value })}>
-                        {Object.entries(TIPOS_INV).map(([k, v]) => <option key={k} value={k}>{v.icon} {v.label} ({(v.taxaAnual * 100).toFixed(2)}% a.a. est.)</option>)}
-                      </select>
-                    </div>
-                    <InputField label="Valor Investido (R$)" type="number" placeholder="0,00" value={novoInv.aporte} onChange={e => setNovoInv({ ...novoInv, aporte: e.target.value })} />
-                    <InputField label="Data do Aporte" type="date" value={novoInv.dataInicio} onChange={e => setNovoInv({ ...novoInv, dataInicio: e.target.value })} />
-                    <div style={{ gridColumn: "1 / -1" }}>
-                      <InputField label="Taxa personalizada % a.a. (opcional — deixe vazio para usar estimativa do tipo)" type="number" placeholder={`Padrão: ${((TIPOS_INV[novoInv.tipo]?.taxaAnual ?? 0.10) * 100).toFixed(2)}%`} value={novoInv.taxaPersonalizada} onChange={e => setNovoInv({ ...novoInv, taxaPersonalizada: e.target.value })} />
-                    </div>
-                  </div>
-                  <div style={{ marginTop: 12 }}>
-                    <button style={S.btn("success")} onClick={addInvestimento}>{editInvId ? "💾 Salvar" : "✓ Adicionar"}</button>
-                  </div>
-                </div>
-              )}
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="btn btn-primary" style="flex:1" data-action="save-despesa">${editId?'💾 Salvar':'✓ Adicionar'}</button>
+          <button class="btn btn-ghost" data-action="close-modal">Cancelar</button>
+        </div>
+      </div>
+    </div>`;
+  }
 
-              {/* Lista de investimentos */}
-              {investimentos.length === 0 && (
-                <div style={{ ...S.card, textAlign: "center", padding: 40, color: "#94a3b8" }}>
-                  Nenhum investimento cadastrado.<br />
-                  <span style={{ fontSize: 13 }}>Clique em "+ Novo Investimento" para começar.</span>
-                </div>
-              )}
+  if(showModal==='receita') {
+    return `
+    <div class="overlay" id="modal-overlay">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div style="font-size:16px;font-weight:800;margin-bottom:16px">➕ Nova Receita</div>
+        <div class="form-group"><label class="form-label">Nome</label><input class="form-input" id="f-nome" placeholder="Ex: Salário" value="${form.nome||''}"></div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" id="f-valor" type="number" value="${form.valor||''}"></div>
+          <div class="form-group"><label class="form-label">Data</label><input class="form-input" id="f-data" type="date" value="${form.data||''}"></div>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:10px">
+          <input type="checkbox" id="f-rec" ${form.recorrente?'checked':''} style="width:18px;height:18px">
+          <label for="f-rec" style="font-size:14px;cursor:pointer">Recorrente (mensal)</label>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="btn btn-success" style="flex:1" data-action="save-receita">✓ Adicionar</button>
+          <button class="btn btn-ghost" data-action="close-modal">Cancelar</button>
+        </div>
+      </div>
+    </div>`;
+  }
 
-              {investimentos.map(inv => {
-                const tipo = TIPOS_INV[inv.tipo] || TIPOS_INV.outro;
-                const taxa = taxaEfetiva(inv);
-                const rendAcum = rendimentoAtual(inv.aporte, taxa, inv.dataInicio);
-                const msInicio = new Date(inv.dataInicio + "T00:00:00").getTime();
-                const diasInv = Math.max(0, Math.floor((Date.now() - msInicio) / 86400000));
-                const rendMensal = inv.aporte * (Math.pow(1 + taxa, 1/12) - 1);
+  if(showModal==='investimento') {
+    const tipo = form.tipo||'cdb';
+    return `
+    <div class="overlay" id="modal-overlay">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div style="font-size:16px;font-weight:800;margin-bottom:16px">${editId?'✏️ Editar':'➕ Novo'} Investimento</div>
+        <div class="form-group"><label class="form-label">Nome</label><input class="form-input" id="f-nome" placeholder="Ex: CDB Nubank" value="${form.nome||''}"></div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Tipo</label>
+            <select class="form-select" id="f-tipo">
+              ${Object.entries(TIPOS_INV).map(([k,v])=>`<option value="${k}" ${tipo===k?'selected':''}>${v.icon} ${v.label}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Aporte (R$)</label><input class="form-input" id="f-aporte" type="number" value="${form.aporte||''}"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Data do Aporte</label><input class="form-input" id="f-inicio" type="date" value="${form.inicio||''}"></div>
+        <div class="form-group"><label class="form-label">Taxa % a.a. (opcional)</label><input class="form-input" id="f-taxa" type="number" step="0.01" placeholder="${((TIPOS_INV[tipo]?.taxa||0.10)*100).toFixed(2)}% padrão" value="${form.taxaCustom?form.taxaCustom*100:''}"></div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="btn btn-success" style="flex:1" data-action="save-invest">${editId?'💾 Salvar':'✓ Adicionar'}</button>
+          <button class="btn btn-ghost" data-action="close-modal">Cancelar</button>
+        </div>
+      </div>
+    </div>`;
+  }
 
-                return (
-                  <div key={inv.id} style={{ ...S.card, marginBottom: 12, borderLeft: `4px solid ${tipo.cor}`, padding: "16px 20px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10 }}>
-                      <div style={{ flex: 1, minWidth: 180 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                          <span style={{ fontSize: 22 }}>{tipo.icon}</span>
-                          <div>
-                            <div style={{ fontWeight: 800, fontSize: 15 }}>{inv.nome}</div>
-                            <div style={{ fontSize: 12, color: "#94a3b8" }}>
-                              {tipo.label} · {(taxa * 100).toFixed(2)}% a.a. · Desde {fmtDate(inv.dataInicio)} ({diasInv}d)
-                            </div>
-                          </div>
-                        </div>
+  if(showModal==='comprovante') {
+    return `
+    <div class="overlay" id="modal-overlay">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div style="font-size:16px;font-weight:800;margin-bottom:4px">🧾 Comprovante</div>
+        <div style="font-size:13px;color:#64748b;margin-bottom:16px">Envie uma foto do comprovante</div>
+        <div id="comp-area" style="border:2px dashed #e2e8f0;border-radius:16px;padding:32px;text-align:center;cursor:pointer;background:#f8fafc" onclick="document.getElementById('comp-file').click()">
+          <div style="font-size:48px">🧾</div>
+          <div style="font-weight:700;margin-top:12px">Toque para enviar foto</div>
+          <div style="font-size:13px;color:#94a3b8;margin-top:4px">PIX, boleto, recibo...</div>
+          <input type="file" id="comp-file" accept="image/*" style="display:none" data-action="comp-file">
+        </div>
+        <div id="comp-result" style="display:none;margin-top:16px"></div>
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button class="btn btn-ghost" style="flex:1" data-action="close-modal">Fechar</button>
+        </div>
+      </div>
+    </div>`;
+  }
 
-                        {/* Barra de progresso do rendimento */}
-                        <div style={{ marginTop: 8 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#94a3b8", marginBottom: 3 }}>
-                            <span>Aporte: {fmt(inv.aporte)}</span>
-                            <span>Rendimento: {((rendAcum / inv.aporte) * 100).toFixed(3)}%</span>
-                          </div>
-                          <div style={{ background: "#f1f5f9", borderRadius: 99, height: 6, overflow: "hidden" }}>
-                            <div style={{ width: `${Math.min(100, (rendAcum / inv.aporte) * 100 * 5)}%`, background: `linear-gradient(90deg, ${tipo.cor}99, ${tipo.cor})`, height: "100%", borderRadius: 99, transition: "width 1s" }} />
-                          </div>
-                        </div>
-                      </div>
+  return '';
+}
 
-                      <div style={{ display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
-                        {/* Ticker rendimento */}
-                        <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 12, padding: "10px 16px", textAlign: "right", minWidth: 140 }}>
-                          <div style={{ fontSize: 11, color: "#16a34a", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>⚡ Rendimento total</div>
-                          <div style={{ fontSiz
+// ─── Events ───────────────────────────────────────────────────────────────────
+function bindEvents() {
+  document.querySelectorAll('[data-tab]').forEach(el=>{
+    el.addEventListener('click',()=>setState({tab:el.dataset.tab}));
+  });
+  document.querySelectorAll('[data-filtro]').forEach(el=>{
+    el.addEventListener('click',()=>setState({filtro:el.dataset.filtro}));
+  });
+
+  const act = (sel,fn) => { const el=document.querySelector(sel); if(el) el.addEventListener('click',fn); };
+  const acts = (sel,fn) => document.querySelectorAll(sel).forEach(el=>el.addEventListener('click',fn));
+
+  // Overlay close
+  act('#modal-overlay',e=>{ if(e.target.id==='modal-overlay') setState({showModal:null,form:{},editId:null}); });
+  acts('[data-action="close-modal"]',()=>setState({showModal:null,form:{},editId:null}));
+
+  // Open modals
+  acts('[data-action="modal-despesa"]',()=>setState({showModal:'despesa',form:{},editId:null}));
+  acts('[data-action="modal-fixa"]',()=>setState({showModal:'fixa',form:{fixa:true},editId:null}));
+  acts('[data-action="modal-receita"]',()=>setState({showModal:'receita',form:{},editId:null}));
+  acts('[data-action="modal-invest"]',()=>setState({showModal:'investimento',form:{},editId:null}));
+  acts('[data-action="comprovante"]',()=>setState({showModal:'comprovante',form:{}}));
+
+  // Toggle fixa
+  act('#toggle-fixa',()=>{
+    const fixa=!state.form.fixa;
+    setState({form:{...state.form,fixa},showModal:fixa?'fixa':'despesa'});
+  });
+
+  // Save despesa
+  acts('[data-action="save-despesa"]',()=>{
+    const nome=document.getElementById('f-nome')?.value.trim();
+    const valor=parseFloat(document.getElementById('f-valor')?.value);
+    if(!nome||!valor) return;
+    const fixa=!!state.form.fixa;
+    const prioridade=document.getElementById('f-prio')?.value||'moderado';
+    const categoria=document.getElementById('f-cat')?.value.trim()||'';
+    const vencimento=fixa?'':document.getElementById('f-venc')?.value||'';
+    const diaVenc=fixa?parseInt(document.getElementById('f-dia')?.value)||'':'';
+    const newD={nome,valor,prioridade,categoria,fixa,vencimento,diaVenc,pago:false};
+    if(state.editId) {
+      setState({despesas:state.despesas.map(d=>d.id===state.editId?{...d,...newD}:d),showModal:null,form:{},editId:null});
+    } else {
+      setState({despesas:[...state.despesas,{...newD,id:Date.now()}],showModal:null,form:{},editId:null});
+    }
+  });
+
+  // Save receita
+  acts('[data-action="save-receita"]',()=>{
+    const nome=document.getElementById('f-nome')?.value.trim();
+    const valor=parseFloat(document.getElementById('f-valor')?.value);
+    if(!nome||!valor) return;
+    const data=document.getElementById('f-data')?.value||'';
+    const recorrente=document.getElementById('f-rec')?.checked||false;
+    setState({receitas:[...state.receitas,{nome,valor,data,recorrente,id:Date.now()}],showModal:null,form:{},editId:null});
+  });
+
+  // Save invest
+  acts('[data-action="save-invest"]',()=>{
+    const nome=document.getElementById('f-nome')?.value.trim();
+    const aporte=parseFloat(document.getElementById('f-aporte')?.value);
+    const inicio=document.getElementById('f-inicio')?.value;
+    if(!nome||!aporte||!inicio) return;
+    const tipo=document.getElementById('f-tipo')?.value||'cdb';
+    const taxaRaw=document.getElementById('f-taxa')?.value;
+    const taxaCustom=taxaRaw?parseFloat(taxaRaw)/100:null;
+    const newI={nome,aporte,inicio,tipo,taxaCustom};
+    if(state.editId) {
+      setState({investimentos:state.investimentos.map(i=>i.id===state.editId?{...i,...newI}:i),showModal:null,form:{},editId:null});
+    } else {
+      setState({investimentos:[...state.investimentos,{...newI,id:Date.now()}],showModal:null,form:{},editId:null});
+    }
+  });
+
+  // Pagar / unpagar
+  acts('[data-action="pagar"]',e=>{ const id=parseInt(e.currentTarget.dataset.id); setState({despesas:state.despesas.map(d=>d.id===id?{...d,pago:true}:d)}); });
+  acts('[data-action="unpagar"]',e=>{ const id=parseInt(e.currentTarget.dataset.id); setState({despesas:state.despesas.map(d=>d.id===id?{...d,pago:false}:d)}); });
+  acts('[data-action="toggle"]',e=>{ const id=parseInt(e.currentTarget.dataset.id); setState({despesas:state.despesas.map(d=>d.id===id?{...d,pago:!d.pago}:d)}); });
+
+  // Delete
+  acts('[data-action="del-despesa"]',e=>{ const id=parseInt(e.currentTarget.dataset.id); setState({despesas:state.despesas.filter(d=>d.id!==id)}); });
+  acts('[data-action="del-receita"]',e=>{ const id=parseInt(e.currentTarget.dataset.id); setState({receitas:state.receitas.filter(r=>r.id!==id)}); });
+  acts('[data-action="del-invest"]',e=>{ const id=parseInt(e.currentTarget.dataset.id); setState({investimentos:state.investimentos.filter(i=>i.id!==id)}); });
+
+  // Edit despesa
+  acts('[data-action="edit-despesa"]',e=>{
+    const id=parseInt(e.currentTarget.dataset.id);
+    const d=state.despesas.find(x=>x.id===id);
+    if(d) setState({showModal:d.fixa?'fixa':'despesa',form:{...d},editId:id});
+  });
+
+  // Edit invest
+  acts('[data-action="edit-invest"]',e=>{
+    const id=parseInt(e.currentTarget.dataset.id);
+    const inv=state.investimentos.find(x=>x.id===id);
+    if(inv) setState({showModal:'investimento',form:{...inv},editId:id});
+  });
+
+  // Comprovante file
+  const fileInput=document.getElementById('comp-file');
+  if(fileInput) fileInput.addEventListener('change',handleComprovante);
+
+  // Start tickers
+  startTickers();
+}
+
+// ─── Tickers ─────────────────────────────────────────────────────────────────
+let tickerInterval = null;
+function startTickers() {
+  if(tickerInterval) clearInterval(tickerInterval);
+  tickerInterval = setInterval(()=>{
+    const {investimentos} = state;
+    let totRend = 0;
+    investimentos.forEach(inv=>{
+      const tipo=TIPOS_INV[inv.tipo]||TIPOS_INV.outro;
+      const taxa=inv.taxaCustom||tipo.taxa;
+      const ra=rendAcum(inv.aporte,taxa,inv.inicio);
+      totRend+=ra;
+      const el=document.getElementById(`ticker-${inv.id}`);
+      if(el) el.textContent=fmt(ra + rps(inv.aporte,taxa)*Date.now()/1000 - rps(inv.aporte,taxa)*Date.now()/1000);
+      // simpler: just increment
+      if(el) {
+        const cur=parseFloat(el.dataset.val||ra);
+        const next=cur+rps(inv.aporte,taxa)*0.1;
+        el.dataset.val=next;
+        el.textContent=fmt(next);
+      }
+    });
+    const totEl=document.getElementById('ticker-total');
+    if(totEl){
+      const cur=parseFloat(totEl.dataset.val||totRend);
+      const totalRps=investimentos.reduce((s,inv)=>{
+        const taxa=(inv.taxaCustom)||(TIPOS_INV[inv.tipo]||TIPOS_INV.outro).taxa;
+        return s+rps(inv.aporte,taxa);
+      },0);
+      const next=cur+totalRps*0.1;
+      totEl.dataset.val=next;
+      totEl.textContent=fmt(next);
+    }
+    const dashEl=document.getElementById('ticker-dash');
+    if(dashEl){
+      const cur=parseFloat(dashEl.dataset.val||totRend);
+      const totalRps=investimentos.reduce((s,inv)=>{
+        const taxa=(inv.taxaCustom)||(TIPOS_INV[inv.tipo]||TIPOS_INV.outro).taxa;
+        return s+rps(inv.aporte,taxa);
+      },0);
+      const next=cur+totalRps*0.1;
+      dashEl.dataset.val=next;
+      dashEl.textContent=fmt(next);
+    }
+  },100);
+}
+
+// ─── Comprovante IA ───────────────────────────────────────────────────────────
+async function handleComprovante(e) {
+  const file = e.target.files[0];
+  if(!file) return;
+  const area = document.getElementById('comp-area');
+  const result = document.getElementById('comp-result');
+  area.innerHTML='<div style="font-size:32px;margin-bottom:12px">🔍</div><div style="font-weight:700">Analisando comprovante...</div><div style="font-size:13px;color:#94a3b8;margin-top:4px">A IA está lendo o comprovante</div>';
+  result.style.display='none';
+
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    const b64=ev.target.result.split(',')[1];
+    const mediaType=file.type;
+    const pendentes=state.despesas.filter(d=>!d.pago).map(d=>`ID ${d.id}: ${d.nome} (${fmt(d.valor)})`).join(', ');
+    try {
+      const res=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:800,
+          messages:[{role:'user',content:[
+            {type:'image',source:{type:'base64',media_type:mediaType,data:b64}},
+            {type:'text',text:`Analise este comprovante. Despesas pendentes: ${pendentes}. Retorne apenas JSON: {"beneficiario":"...","valor":0,"data":"DD/MM/AAAA","tipo":"...","despesaIdMatch":null,"confianca":"alta","motivo":"..."}`}
+          ]}]
+        })
+      });
+      const data=await res.json();
+      const text=data.content?.map(b=>b.text||'').join('').replace(/```json|```/g,'').trim();
+      const parsed=JSON.parse(text);
+      const matched=parsed.despesaIdMatch?state.despesas.find(d=>d.id===parsed.despesaIdMatch):null;
+
+      result.style.display='block';
+      result.innerHTML=`
+      <div style="background:#f8fafc;border-radius:12px;padding:14px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:8px;text-transform:uppercase">Dados extraídos</div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9"><span style="color:#64748b">Beneficiário</span><span style="font-weight:700">${parsed.beneficiario||'—'}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9"><span style="color:#64748b">Valor</span><span style="font-weight:800">${parsed.valor?fmt(parsed.valor):'—'}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:#64748b">Data</span><span style="font-weight:700">${parsed.data||'—'}</span></div>
+      </div>
+      ${matched?`
+      <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:14px;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:700;color:#16a34a;margin-bottom:6px">✅ Despesa identificada</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:800">${matched.nome}</div>
+            <div style="font-size:12px;color:#64748b">${parsed.motivo}</div>
+          </div>
+          <span style="font-weight:800;color:#16a34a">${fmt(matched.valor)}</span>
+        </div>
+        <button class="btn btn-success" style="width:100%;margin-top:10px" data-action="comp-confirm" data-id="${matched.id}">✅ Marcar como paga</button>
+      </div>`:`
+      <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;padding:14px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;color:#ea580c;margin-bottom:4px">⚠️ Despesa não identificada</div>
+        <div style="font-size:13px;color:#64748b;margin-bottom:10px">${parsed.motivo||'Selecione manualmente:'}</div>
+        <select class="form-select" id="comp-select">
+          <option value="">— Selecione —</option>
+          ${state.despesas.filter(d=>!d.pago).map(d=>`<option value="${d.id}">${d.nome} — ${fmt(d.valor)}</option>`).join('')}
+        </select>
+        <button class="btn btn-success" style="width:100%;margin-top:10px" id="comp-manual-btn">✅ Marcar como paga</button>
+      </div>`}`;
+
+      // Bind confirm buttons
+      const confirmBtn=result.querySelector('[data-action="comp-confirm"]');
+      if(confirmBtn) confirmBtn.addEventListener('click',()=>{
+        const id=parseInt(confirmBtn.dataset.id);
+        const d=state.despesas.find(x=>x.id===id);
+        setState({despesas:state.despesas.map(x=>x.id===id?{...x,pago:true}:x),showModal:null,form:{},toast:`✅ "${d?.nome}" marcada como paga!`});
+        setTimeout(()=>setState({toast:null}),3000);
+      });
+      const manualBtn=result.querySelector('#comp-manual-btn');
+      if(manualBtn) manualBtn.addEventListener('click',()=>{
+        const id=parseInt(document.getElementById('comp-select')?.value);
+        if(!id) return;
+        const d=state.despesas.find(x=>x.id===id);
+        setState({despesas:state.despesas.map(x=>x.id===id?{...x,pago:true}:x),showModal:null,form:{},toast:`✅ "${d?.nome}" marcada como paga!`});
+        setTimeout(()=>setState({toast:null}),3000);
+      });
+
+    } catch(err) {
+      area.innerHTML='<div style="color:#ef4444;font-weight:700">❌ Erro ao analisar. Tente novamente.</div>';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+render();
+
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
