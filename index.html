@@ -555,6 +555,7 @@ function buildReceitas() {
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <span style="font-weight:700;color:#22c55e;font-size:16px">${fmt(r.valor)}</span>
+        <button class="btn btn-ghost btn-sm" data-action="edit-receita" data-id="${r.id}">✏️</button>
         <button class="btn btn-danger btn-sm" data-action="del-receita" data-id="${r.id}">🗑</button>
       </div>
     </div>`).join('')}
@@ -685,7 +686,7 @@ function buildModal() {
     <div class="overlay" id="modal-overlay">
       <div class="modal">
         <div class="modal-handle"></div>
-        <div style="font-size:16px;font-weight:800;margin-bottom:16px">➕ Nova Receita</div>
+        <div style="font-size:16px;font-weight:800;margin-bottom:16px">${editId ? '✏️ Editar Receita' : '➕ Nova Receita'}</div>
         <div class="form-group"><label class="form-label">Nome</label><input class="form-input" id="f-nome" placeholder="Ex: Salário" value="${form.nome||''}"></div>
         <div class="form-grid">
           <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" id="f-valor" type="number" value="${form.valor||''}"></div>
@@ -696,7 +697,7 @@ function buildModal() {
           <label for="f-rec" style="font-size:14px;cursor:pointer">Recorrente (mensal)</label>
         </div>
         <div style="display:flex;gap:10px;margin-top:8px">
-          <button class="btn btn-success" style="flex:1" data-action="save-receita">✓ Adicionar</button>
+          <button class="btn btn-success" style="flex:1" data-action="save-receita">${editId ? '💾 Salvar' : '✓ Adicionar'}</button>
           <button class="btn btn-ghost" data-action="close-modal">Cancelar</button>
         </div>
       </div>
@@ -810,7 +811,12 @@ function bindEvents() {
     if(!nome||!valor) return;
     const data=document.getElementById('f-data')?.value||'';
     const recorrente=document.getElementById('f-rec')?.checked||false;
-    setState({receitas:[...state.receitas,{nome,valor,data,recorrente,id:Date.now()}],showModal:null,form:{},editId:null});
+    const newR={nome,valor,data,recorrente};
+    if(state.editId) {
+      setState({receitas:state.receitas.map(r=>r.id===state.editId?{...r,...newR}:r),showModal:null,form:{},editId:null});
+    } else {
+      setState({receitas:[...state.receitas,{...newR,id:Date.now()}],showModal:null,form:{},editId:null});
+    }
   });
 
   // Save invest
@@ -845,6 +851,13 @@ function bindEvents() {
     const id=parseInt(e.currentTarget.dataset.id);
     const d=state.despesas.find(x=>x.id===id);
     if(d) setState({showModal:d.fixa?'fixa':'despesa',form:{...d},editId:id});
+  });
+
+  // Edit receita
+  acts('[data-action="edit-receita"]',e=>{
+    const id=parseInt(e.currentTarget.dataset.id);
+    const r=state.receitas.find(x=>x.id===id);
+    if(r) setState({showModal:'receita',form:{...r},editId:id});
   });
 
   // Edit invest
