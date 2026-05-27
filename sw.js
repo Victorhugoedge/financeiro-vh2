@@ -1,10 +1,8 @@
-const CACHE = 'fin-vh-v1';
+const CACHE = 'fin-vh-v4';
 const ASSETS = [
   './',
   './index.html',
-  'https://unpkg.com/react@18/umd/react.production.min.js',
-  'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
-  'https://unpkg.com/@babel/standalone/babel.min.js',
+  './manifest.json',
 ];
 
 self.addEventListener('install', e => {
@@ -20,7 +18,12 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Sempre busca versão nova do index.html
+  if (e.request.url.includes('index.html') || e.request.url.endsWith('/')) {
+    e.respondWith(fetch(e.request).catch(() => caches.match('./index.html')));
+    return;
+  }
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => caches.match('./index.html')))
+    caches.match(e.request).then(cached => cached || fetch(e.request))
   );
 });
