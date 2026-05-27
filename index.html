@@ -4,33 +4,38 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
   <meta name="apple-mobile-web-app-title" content="Fin. VH"/>
-  <meta name="theme-color" content="#0f172a"/>
+  <meta name="theme-color" content="#f0f4f8"/>
   <title>Planejamento Financeiro</title>
   <link rel="manifest" href="manifest.json"/>
   <style>
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
-    html,body{height:100%;background:#f8fafc;font-family:-apple-system,'SF Pro Display',sans-serif}
+    html,body{height:100%;background:#f0f4f8;font-family:-apple-system,'SF Pro Display',sans-serif}
     input,select,button{font-family:inherit;-webkit-appearance:none}
     input,select{font-size:16px!important}
     ::-webkit-scrollbar{display:none}
 
-    .app{min-height:100dvh;background:#f8fafc;color:#1e293b;padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+    .app{min-height:100dvh;background:#f0f4f8;color:#1e293b;padding-bottom:calc(80px + env(safe-area-inset-bottom))}
 
-    /* Header */
-    .header{background:linear-gradient(160deg,#1e293b,#0f172a);color:#fff;
-      padding:calc(env(safe-area-inset-top) + 16px) 20px 18px;
+    /* Header — light style */
+    .header{background:#f0f4f8;color:#1e293b;
+      padding:calc(env(safe-area-inset-top) + 14px) 20px 10px;
       display:flex;align-items:center;justify-content:space-between}
-    .header h1{font-size:18px;font-weight:800;letter-spacing:-.5px}
-    .header p{font-size:11px;color:#94a3b8;margin-top:2px}
-    .saldo-label{font-size:10px;color:#94a3b8;text-align:right;text-transform:uppercase;letter-spacing:.5px}
-    .saldo-val{font-size:20px;font-weight:800;text-align:right;letter-spacing:-.5px}
+    .header-left{display:flex;align-items:center;gap:12px}
+    .avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#1d4ed8);
+      display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0}
+    .header h1{font-size:17px;font-weight:800;color:#1e293b;letter-spacing:-.3px}
+    .header p{font-size:12px;color:#64748b;margin-top:1px}
+    .header-icons{display:flex;gap:8px}
+    .icon-btn{width:38px;height:38px;border-radius:50%;background:#fff;border:none;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;font-size:16px;
+      box-shadow:0 1px 4px rgba(0,0,0,.08)}
 
     /* Bottom Nav */
     .bottom-nav{position:fixed;bottom:0;left:0;right:0;
-      background:rgba(255,255,255,.95);backdrop-filter:blur(20px);
-      border-top:1px solid #e2e8f0;
+      background:rgba(255,255,255,.97);backdrop-filter:blur(20px);
+      border-top:1px solid #e8edf2;
       padding-bottom:env(safe-area-inset-bottom);
       display:flex;z-index:100}
     .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;
@@ -46,12 +51,29 @@
 
     /* Cards */
     .card{background:#fff;border-radius:20px;padding:16px;
-      box-shadow:0 2px 8px rgba(0,0,0,.06);border:1px solid #f1f5f9;margin-bottom:12px}
+      box-shadow:0 1px 6px rgba(0,0,0,.05);margin-bottom:12px}
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-    .stat-card{border-radius:16px;padding:14px 16px}
-    .stat-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#94a3b8;margin-bottom:3px}
+    .stat-card{border-radius:16px;padding:14px 16px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.05)}
+    .stat-label{font-size:12px;font-weight:500;color:#64748b;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+    .stat-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
     .stat-val{font-size:20px;font-weight:800;letter-spacing:-.5px}
     .stat-sub{font-size:11px;margin-top:2px;opacity:.7}
+
+    /* Saldo principal card */
+    .saldo-card{background:#fff;border-radius:20px;padding:18px 20px;margin-bottom:12px;
+      box-shadow:0 1px 6px rgba(0,0,0,.05);display:flex;align-items:center;justify-content:space-between}
+    .saldo-card-icon{width:44px;height:44px;border-radius:14px;background:#f0f9ff;
+      display:flex;align-items:center;justify-content:center;font-size:22px}
+    .saldo-card-label{font-size:13px;color:#64748b;font-weight:500;margin-bottom:2px}
+    .saldo-card-val{font-size:26px;font-weight:800;letter-spacing:-.5px;color:#1e293b}
+
+    /* Mes selector */
+    .mes-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .mes-btn{display:flex;align-items:center;gap:6px;background:#fff;border:none;border-radius:20px;
+      padding:8px 14px;font-size:14px;font-weight:600;color:#1e293b;cursor:pointer;
+      box-shadow:0 1px 4px rgba(0,0,0,.07)}
+    .expandir-btn{display:flex;align-items:center;gap:6px;background:none;border:none;
+      font-size:13px;font-weight:600;color:#64748b;cursor:pointer}
 
     /* Buttons */
     .btn{border:none;border-radius:12px;padding:11px 18px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
@@ -80,7 +102,7 @@
     .row:last-child{border-bottom:none}
 
     /* Rank */
-    .rank-item{display:flex;gap:10px;align-items:center;padding:14px;border-radius:16px;margin-bottom:10px;border:1px solid #f1f5f9}
+    .rank-item{display:flex;gap:10px;align-items:center;padding:14px;border-radius:16px;margin-bottom:10px;border:1px solid #f1f5f9;background:#fff}
     .rank-num{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0}
 
     /* Badges */
@@ -89,7 +111,7 @@
     .days-badge{font-size:11px;font-weight:700}
 
     /* Progress bar */
-    .prog-wrap{background:#f1f5f9;border-radius:99px;height:8px;overflow:hidden}
+    .prog-wrap{background:#f1f5f9;border-radius:99px;height:6px;overflow:hidden}
     .prog-bar{height:100%;border-radius:99px;transition:width .5s}
 
     /* Toast */
@@ -100,12 +122,12 @@
     @keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 
     /* Modal */
-    .overlay{position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:200;display:flex;align-items:flex-end}
+    .overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:200;display:flex;align-items:flex-end}
     .modal{background:#fff;border-radius:24px 24px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 20px calc(20px + env(safe-area-inset-bottom))}
     .modal-handle{width:36px;height:4px;background:#e2e8f0;border-radius:99px;margin:0 auto 16px}
 
     /* Invest card */
-    .inv-card{background:#fff;border-radius:20px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    .inv-card{background:#fff;border-radius:20px;padding:16px;margin-bottom:12px;box-shadow:0 1px 6px rgba(0,0,0,.05)}
     .ticker{font-variant-numeric:tabular-nums;font-weight:800;font-size:20px}
 
     /* CTA */
@@ -114,14 +136,18 @@
     .section-sub{font-size:12px;color:#64748b}
     .flex-between{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
     .flex-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    .save-btn{position:relative;border:none;border-radius:10px;padding:7px 13px;
-      font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;
-      background:rgba(255,255,255,0.12);color:#fff;backdrop-filter:blur(10px);
-      border:1px solid rgba(255,255,255,0.18);transition:all .2s}
-    .save-btn:active{transform:scale(.93);background:rgba(255,255,255,0.2)}
-    .save-btn.saved{background:rgba(34,197,94,0.25);border-color:rgba(34,197,94,0.5)}
-    .save-dot{width:6px;height:6px;border-radius:50%;background:#f59e0b;
-      animation:pulse-dot 1.5s ease-in-out infinite}
+
+    /* Gráfico */
+    .chart-wrap{width:100%;overflow-x:hidden}
+    svg.chart{width:100%;display:block}
+
+    /* Save btn */
+    .save-btn{border:none;border-radius:10px;padding:7px 13px;font-size:12px;font-weight:700;
+      cursor:pointer;display:flex;align-items:center;gap:5px;
+      background:#fff;color:#1e293b;box-shadow:0 1px 4px rgba(0,0,0,.1);transition:all .2s}
+    .save-btn:active{transform:scale(.93)}
+    .save-btn.saved{background:#f0fdf4;color:#16a34a}
+    .save-dot{width:6px;height:6px;border-radius:50%;background:#f59e0b;animation:pulse-dot 1.5s ease-in-out infinite}
     .save-dot.ok{background:#22c55e;animation:none}
     @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
   </style>
@@ -137,16 +163,50 @@ const PRIORITY = {
   moderado:  {label:'Moderado',  color:'#eab308',bg:'#fefce8',border:'#fef08a',icon:'🟡',order:3},
   baixo:     {label:'Baixo',     color:'#22c55e',bg:'#f0fdf4',border:'#bbf7d0',icon:'🟢',order:4},
 };
+// CDI atual: 14.829% a.a. (maio/2026 - Banco Central)
+const CDI_ANUAL = 0.14829;
+
 const TIPOS_INV = {
-  cdb:     {label:'CDB',          icon:'🏦',cor:'#3b82f6',taxa:0.1265},
-  lci:     {label:'LCI/LCA',      icon:'🌾',cor:'#22c55e',taxa:0.1100},
-  tesouro: {label:'Tesouro Selic',icon:'🇧🇷',cor:'#f59e0b',taxa:0.1265},
-  fundos:  {label:'Fundos DI',    icon:'📈',cor:'#8b5cf6',taxa:0.1100},
-  acoes:   {label:'Ações/ETF',    icon:'📉',cor:'#ef4444',taxa:0.1500},
-  poupanca:{label:'Poupança',     icon:'🐷',cor:'#ec4899',taxa:0.0706},
-  cripto:  {label:'Cripto',       icon:'₿', cor:'#f97316',taxa:0.2500},
-  outro:   {label:'Outro',        icon:'💼',cor:'#64748b',taxa:0.1000},
+  cdb:     {label:'CDB 100% CDI', icon:'🏦',cor:'#3b82f6',taxa:CDI_ANUAL,    isento:false},
+  cdb120:  {label:'CDB 120% CDI', icon:'🏦',cor:'#6366f1',taxa:CDI_ANUAL*1.2,isento:false},
+  lci:     {label:'LCI/LCA',      icon:'🌾',cor:'#22c55e',taxa:CDI_ANUAL*0.9,isento:true},
+  tesouro: {label:'Tesouro Selic',icon:'🇧🇷',cor:'#f59e0b',taxa:CDI_ANUAL,    isento:false},
+  fundos:  {label:'Fundos DI',    icon:'📈',cor:'#8b5cf6',taxa:CDI_ANUAL*0.95,isento:false},
+  acoes:   {label:'Ações/ETF',    icon:'📉',cor:'#ef4444',taxa:0.1500,        isento:false},
+  poupanca:{label:'Poupança',     icon:'🐷',cor:'#ec4899',taxa:0.0706,        isento:true},
+  cripto:  {label:'Cripto',       icon:'₿', cor:'#f97316',taxa:0.2500,        isento:false},
+  outro:   {label:'Outro',        icon:'💼',cor:'#64748b',taxa:CDI_ANUAL,     isento:false},
 };
+
+// ── Tabela IR regressiva (renda fixa) ───────────────────────────────────────
+// até 180 dias: 22,5% | 181-360: 20% | 361-720: 17,5% | acima 720: 15%
+function aliquotaIR(dias) {
+  if(dias <= 180) return 0.225;
+  if(dias <= 360) return 0.20;
+  if(dias <= 720) return 0.175;
+  return 0.15;
+}
+
+// IOF regressivo: dia 1 = 96%, dia 2 = 93%... dia 30 = 3%, após 30 = 0%
+const IOF_TABLE = [96,93,90,86,83,80,76,73,70,66,63,60,56,53,50,46,43,40,36,33,30,26,23,20,16,13,10,6,3,0];
+function aliquotaIOF(dias) {
+  if(dias >= 30) return 0;
+  return IOF_TABLE[Math.max(0, dias-1)] / 100;
+}
+
+// Calcula rendimento bruto, IOF, IR e líquido
+function calcRendimento(aporte, taxaAnual, inicio, isento) {
+  const msInicio = new Date(inicio+'T00:00:00').getTime();
+  const dias = Math.max(0, Math.floor((Date.now() - msInicio) / 86400000));
+  const anos = dias / 365.25;
+  const bruto = aporte * (Math.pow(1 + taxaAnual, anos) - 1);
+  if(bruto <= 0) return {bruto:0, iof:0, ir:0, liquido:0, dias};
+  const iofVal  = isento ? 0 : bruto * aliquotaIOF(dias);
+  const baseIR  = bruto - iofVal;
+  const irVal   = isento ? 0 : baseIR * aliquotaIR(dias);
+  const liquido = bruto - iofVal - irVal;
+  return {bruto, iof:iofVal, ir:irVal, liquido, dias};
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const fmt = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
@@ -160,6 +220,8 @@ const rendAcum = (aporte, taxa, inicio) => {
   return aporte * (Math.pow(1+taxa, anos) - 1);
 };
 const rps = (aporte,taxa) => aporte*taxa/(365.25*24*3600);
+const getTaxaEfetiva = (inv) => inv.taxaCustom || (TIPOS_INV[inv.tipo]||TIPOS_INV.outro).taxa;
+const getIsento = (inv) => inv.taxaCustom ? false : (TIPOS_INV[inv.tipo]||TIPOS_INV.outro).isento || false;
 
 // ─── State ───────────────────────────────────────────────────────────────────
 // ─── Dados padrão (primeiro acesso) ─────────────────────────────────────────
@@ -254,19 +316,19 @@ function buildApp() {
     ${state.showModal ? buildModal() : ''}
 
     <div class="header">
-      <div>
-        <h1>💰 Planejamento Financeiro</h1>
-        <p>Victor Hugo</p>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+      <div class="header-left">
+        <div class="avatar">VH</div>
         <div>
-          <div class="saldo-label">Saldo</div>
-          <div class="saldo-val" style="color:${saldoColor}">${fmt(saldo)}</div>
+          <h1>Victor Hugo</h1>
+          <p>Perfil Principal</p>
         </div>
+      </div>
+      <div class="header-icons">
         <button class="save-btn ${state.justSaved?'saved':''}" id="save-btn-manual">
           <span class="save-dot ${state.justSaved?'ok':''}"></span>
-          ${state.justSaved ? '✓ Salvo' : '💾 Salvar'}
+          ${state.justSaved ? '✓ Salvo' : '💾'}
         </button>
+        <button class="icon-btn">🔔</button>
       </div>
     </div>
 
@@ -321,68 +383,150 @@ function buildDashboard() {
   const totPend = despesas.filter(d=>!d.pago).reduce((s,d)=>s+d.valor,0);
   const totInv = investimentos.reduce((s,i)=>s+i.aporte,0);
 
+  // Gráfico de despesas por dia (simulado com dados reais)
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const mesAtual = meses[new Date().getMonth()];
+
+  // Gera pontos do gráfico baseado nas despesas reais
+  const chartData = [];
+  for(let d=1;d<=31;d++){
+    const val = despesas
+      .filter(dep=>dep.vencimento && new Date(dep.vencimento+'T12:00:00').getDate()===d)
+      .reduce((s,dep)=>s+dep.valor,0);
+    chartData.push(val);
+  }
+  const maxVal = Math.max(...chartData, 100);
+
+  // Build SVG sparkline
+  const W=320, H=90, PAD=8;
+  const pts = chartData.map((v,i)=>{
+    const x = PAD + (i/(30))*(W-PAD*2);
+    const y = H - PAD - (v/maxVal)*(H-PAD*2);
+    return `${x},${y}`;
+  }).join(' ');
+  const areaBase = `${PAD},${H-PAD} ` + pts + ` ${W-PAD},${H-PAD}`;
+
   const vencendo = despesas.filter(d=>!d.pago&&daysUntil(d.vencimento)!==null&&daysUntil(d.vencimento)<=7)
-    .sort((a,b)=>daysUntil(a.vencimento)-daysUntil(b.vencimento)).slice(0,4);
+    .sort((a,b)=>daysUntil(a.vencimento)-daysUntil(b.vencimento)).slice(0,3);
 
   return `
+  <!-- Mês -->
+  <div class="mes-bar">
+    <button class="mes-btn">📅 ${mesAtual} ${new Date().getFullYear()} ⌄</button>
+    <button class="expandir-btn">Expandir ⌄</button>
+  </div>
+
+  <!-- Saldo atual -->
+  <div class="saldo-card">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="saldo-card-icon">🐷</div>
+      <div>
+        <div class="saldo-card-label">Saldo atual</div>
+        <div class="saldo-card-val" style="color:${saldo>=0?'#1e293b':'#ef4444'}">${fmt(saldo)}</div>
+      </div>
+    </div>
+    <div style="font-size:22px;color:#94a3b8;cursor:pointer">👁</div>
+  </div>
+
+  <!-- Grid 4 cards -->
   <div class="grid2">
-    <div class="stat-card" style="background:#f0fdf4;border:1px solid #bbf7d020">
-      <div class="stat-label">Receitas</div>
-      <div class="stat-val" style="color:#22c55e">${fmt(totRec)}</div>
+    <div class="stat-card">
+      <div class="stat-label">
+        <span class="stat-icon" style="background:#f0fdf4">💚</span>
+        Receitas
+      </div>
+      <div class="stat-val" style="color:#16a34a">${fmt(totRec)}</div>
     </div>
-    <div class="stat-card" style="background:#ede9fe;border:1px solid #c4b5fd20">
-      <div class="stat-label">📌 Fixas</div>
-      <div class="stat-val" style="color:#7c3aed">${fmt(totFixas)}</div>
-      <div class="stat-sub" style="color:#a78bfa">${despesas.filter(d=>d.fixa).length} despesas</div>
+    <div class="stat-card">
+      <div class="stat-label">
+        <span class="stat-icon" style="background:#fef2f2">❤️</span>
+        Despesas
+      </div>
+      <div class="stat-val" style="color:#dc2626">${fmt(totDesp)}</div>
     </div>
-    <div class="stat-card" style="background:#f8fafc;border:1px solid #e2e8f020">
-      <div class="stat-label">Variáveis</div>
-      <div class="stat-val" style="color:#475569">${fmt(totVar)}</div>
+    <div class="stat-card">
+      <div class="stat-label">
+        <span class="stat-icon" style="background:#f0fdf4">💵</span>
+        Recebido
+      </div>
+      <div class="stat-val" style="color:#16a34a">${fmt(totPago>0?totRec:0)}</div>
     </div>
-    <div class="stat-card" style="background:${saldo>=0?'#eff6ff':'#fef2f2'};border:1px solid #e2e8f020">
-      <div class="stat-label">Saldo Final</div>
-      <div class="stat-val" style="color:${saldo>=0?'#3b82f6':'#ef4444'}">${fmt(saldo)}</div>
+    <div class="stat-card">
+      <div class="stat-label">
+        <span class="stat-icon" style="background:#fef2f2">💸</span>
+        Pago
+      </div>
+      <div class="stat-val" style="color:#dc2626">${fmt(totPago)}</div>
+    </div>
+  </div>
+
+  <!-- Gráfico de gastos -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:16px">📊</span>
+        <span style="font-weight:700;font-size:14px">Gastos com Despesas</span>
+      </div>
+      ${totDesp>0&&totPago>0?`<span style="background:#f0fdf4;color:#16a34a;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700">vs mês anterior</span>`:''}
+    </div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:4px">Total em ${mesAtual}:</div>
+    <div style="font-size:28px;font-weight:800;color:#1e293b;margin-bottom:12px">${fmt(totDesp)}</div>
+    <div class="chart-wrap">
+      <svg class="chart" viewBox="0 0 320 90" preserveAspectRatio="none" height="90">
+        <defs>
+          <linearGradient id="chartArea" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" style="stop-color:#ef4444;stop-opacity:0.15"/>
+            <stop offset="100%" style="stop-color:#ef4444;stop-opacity:0"/>
+          </linearGradient>
+        </defs>
+        ${maxVal>0?`
+        <polygon points="${areaBase}" fill="url(#chartArea)"/>
+        <polyline points="${pts}" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        `:'<text x="160" y="50" text-anchor="middle" fill="#94a3b8" font-size="12">Sem despesas cadastradas</text>'}
+      </svg>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-top:4px">
+      <span>01/${String(new Date().getMonth()+1).padStart(2,'0')}</span>
+      <span>15/${String(new Date().getMonth()+1).padStart(2,'0')}</span>
+      <span>30/${String(new Date().getMonth()+1).padStart(2,'0')}</span>
     </div>
   </div>
 
   ${investimentos.length>0?`
+  <!-- Investimentos preview -->
   <div class="cta" style="background:linear-gradient(135deg,#065f46,#047857);cursor:pointer" data-tab="investimentos">
     <div>
-      <div style="font-weight:800;color:#fff;font-size:15px;margin-bottom:2px">📈 Meus Investimentos</div>
+      <div style="font-weight:800;color:#fff;font-size:14px;margin-bottom:2px">📈 Meus Investimentos</div>
       <div style="font-size:12px;color:#6ee7b7">${investimentos.length} ativo(s) · Aporte: ${fmt(totInv)}</div>
     </div>
     <div style="text-align:right">
       <div style="font-size:10px;color:#6ee7b7;font-weight:700">⚡ Rendendo</div>
-      <div id="ticker-dash" style="font-size:18px;font-weight:800;color:#fff">calculando...</div>
+      <div id="ticker-dash" style="font-size:16px;font-weight:800;color:#fff">...</div>
     </div>
   </div>`:''}
 
-  <div class="cta" style="background:linear-gradient(135deg,#0f766e,#0d9488);cursor:pointer" data-action="comprovante">
-    <div>
-      <div style="font-weight:800;color:#fff;font-size:15px;margin-bottom:2px">🧾 Enviar Comprovante</div>
-      <div style="font-size:12px;color:#99f6e4">IA lê e registra o pagamento automaticamente</div>
+  <!-- Comprovante CTA -->
+  <div class="cta" style="background:#fff;border:1px solid #e2e8f0;cursor:pointer" data-action="comprovante">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:40px;height:40px;border-radius:12px;background:#f0f9ff;display:flex;align-items:center;justify-content:center;font-size:20px">🧾</div>
+      <div>
+        <div style="font-weight:700;color:#1e293b;font-size:14px">Enviar Comprovante</div>
+        <div style="font-size:12px;color:#64748b">IA registra automaticamente</div>
+      </div>
     </div>
-    <div style="background:#fff;color:#0f766e;border-radius:10px;padding:8px 14px;font-weight:700;font-size:13px;white-space:nowrap">Enviar →</div>
-  </div>
-
-  <div class="card">
-    <div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px">📈 Pagamentos</div>
-    <div style="font-size:13px;color:#64748b;margin-bottom:8px">${pagas} de ${despesas.length} pagas</div>
-    <div class="prog-wrap">
-      <div class="prog-bar" style="width:${despesas.length?(pagas/despesas.length*100):0}%;background:linear-gradient(90deg,#22c55e,#4ade80)"></div>
-    </div>
-    <div style="margin-top:10px;font-size:12px;color:#94a3b8">Pago: ${fmt(totPago)} · Pendente: ${fmt(totPend)}</div>
+    <div style="background:#3b82f6;color:#fff;border-radius:10px;padding:8px 14px;font-weight:700;font-size:13px">Enviar</div>
   </div>
 
   ${vencendo.length>0?`
+  <!-- Vencendo em breve -->
   <div class="card">
-    <div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px">🚨 Vencendo em Breve</div>
+    <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:10px">🚨 Vencendo em Breve</div>
     ${vencendo.map(d=>`
     <div class="row">
       <div>
         <span style="font-weight:600;font-size:14px">${d.nome}</span>
-        ${d.fixa?fixaBadge():''}
-        ${daysBadge(d.vencimento)}
+        ${d.fixa?'<span class="badge badge-fixa" style="margin-left:6px">Fixa</span>':''}
+        <div style="font-size:12px;color:#94a3b8;margin-top:2px">${fmtDate(d.vencimento)} · ${daysBadge(d.vencimento)}</div>
       </div>
       <span style="font-weight:700;color:#ef4444">${fmt(d.valor)}</span>
     </div>`).join('')}
@@ -574,14 +718,25 @@ function buildInvest() {
     <button class="btn btn-success btn-sm" data-action="modal-invest">+ Novo</button>
   </div>
 
-  <div class="grid2" style="margin-bottom:12px">
-    <div class="stat-card" style="background:linear-gradient(135deg,#065f46,#047857)">
-      <div class="stat-label" style="color:#6ee7b7">Total Investido</div>
-      <div class="stat-val" style="color:#fff">${fmt(totAporte)}</div>
-    </div>
-    <div class="stat-card" style="background:linear-gradient(135deg,#1d4ed8,#2563eb)">
-      <div class="stat-label" style="color:#bfdbfe">⚡ Rendimento</div>
-      <div class="stat-val" style="color:#fff" id="ticker-total">...</div>
+  <div style="background:#0f172a;border-radius:20px;padding:16px;margin-bottom:12px">
+    <div style="font-size:11px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">CDI atual: 14,829% a.a.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>
+        <div style="font-size:10px;color:#6ee7b7;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Total Investido</div>
+        <div style="font-size:20px;font-weight:800;color:#fff">${fmt(totAporte)}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#bfdbfe;font-weight:700;text-transform:uppercase;letter-spacing:.5px">⚡ Rend. Bruto</div>
+        <div style="font-size:20px;font-weight:800;color:#fff" id="ticker-total">...</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#fde68a;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Rend. Líquido</div>
+        <div style="font-size:18px;font-weight:800;color:#4ade80" id="ticker-liq-total">...</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#a78bfa;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Patrimônio Líq.</div>
+        <div style="font-size:18px;font-weight:800;color:#c4b5fd" id="ticker-pat-total">...</div>
+      </div>
     </div>
   </div>
 
@@ -589,9 +744,10 @@ function buildInvest() {
 
   ${investimentos.map(inv=>{
     const tipo = TIPOS_INV[inv.tipo]||TIPOS_INV.outro;
-    const taxa = inv.taxaCustom||tipo.taxa;
-    const ra = rendAcum(inv.aporte,taxa,inv.inicio);
-    const dias = Math.max(0,Math.floor((Date.now()-new Date(inv.inicio+'T00:00:00').getTime())/86400000));
+    const taxa = getTaxaEfetiva(inv);
+    const isento = getIsento(inv);
+    const calc = calcRendimento(inv.aporte, taxa, inv.inicio, isento);
+    const ra = calc.bruto;
     const rendMes = inv.aporte*(Math.pow(1+taxa,1/12)-1);
     const pct = Math.min(100,(ra/inv.aporte)*100*5);
     return `
@@ -618,16 +774,25 @@ function buildInvest() {
           <div class="prog-bar" style="width:${pct}%;background:${tipo.cor}"></div>
         </div>
       </div>
-      <div style="display:flex;gap:10px;justify-content:space-between;align-items:center">
-        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:10px 14px">
-          <div style="font-size:10px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:.5px">⚡ Rendimento total</div>
-          <div class="ticker" style="color:#16a34a" id="ticker-${inv.id}">${fmt(ra)}</div>
-          <div style="font-size:11px;color:#64748b">~${fmt(rendMes)}/mês</div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:14px;padding:12px 14px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:.5px">⚡ Rendimento bruto</span>
+          <span class="ticker" style="color:#16a34a;font-weight:800;font-size:16px" id="ticker-${inv.id}">${fmt(calc.bruto)}</span>
         </div>
-        <div style="text-align:right">
-          <div style="font-size:11px;color:#94a3b8">Patrimônio</div>
-          <div style="font-size:16px;font-weight:800;color:${tipo.cor}">${fmt(inv.aporte+ra)}</div>
+        ${!getIsento(inv)?`
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-top:1px solid #dcfce7">
+          <span style="color:#64748b">IOF (${calc.dias}d)</span>
+          <span style="color:#ef4444;font-weight:600">- ${fmt(calc.iof)}</span>
         </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-top:1px solid #dcfce7">
+          <span style="color:#64748b">IR (${(aliquotaIR(calc.dias)*100).toFixed(1)}%)</span>
+          <span style="color:#ef4444;font-weight:600">- ${fmt(calc.ir)}</span>
+        </div>`:'<div style="font-size:11px;color:#22c55e;padding:4px 0;border-top:1px solid #dcfce7">✅ Isento de IR e IOF</div>'}
+        <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:800;padding:6px 0 2px;border-top:1px solid #bbf7d0;margin-top:2px">
+          <span style="color:#16a34a">Líquido</span>
+          <span style="color:#16a34a" id="ticker-liq-${inv.id}">${fmt(calc.liquido)}</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:4px">~${fmt(rendMes)}/mês bruto · Total guardado: ${fmt(inv.aporte + calc.liquido)}</div>
       </div>
     </div>`;
   }).join('')}
