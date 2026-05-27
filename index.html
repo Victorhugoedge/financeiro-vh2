@@ -150,6 +150,24 @@
     .save-dot{width:6px;height:6px;border-radius:50%;background:#f59e0b;animation:pulse-dot 1.5s ease-in-out infinite}
     .save-dot.ok{background:#22c55e;animation:none}
     @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+
+    /* ── Desktop / Tablet responsive ── */
+    @media (min-width: 768px) {
+      body { background: #e8edf2; }
+      .app { max-width: 480px; margin: 0 auto; min-height: 100dvh;
+        box-shadow: 0 0 60px rgba(0,0,0,.15); background: #f0f4f8; }
+      .bottom-nav { max-width: 480px; left: 50%; transform: translateX(-50%); }
+      .toast { max-width: 480px; left: 50%; transform: translateX(-50%); right: auto; width: 440px; }
+      .overlay { background: rgba(15,23,42,.5); }
+      .modal { max-width: 480px; margin: 0 auto; }
+    }
+    @media (min-width: 1024px) {
+      body { display: flex; align-items: flex-start; justify-content: center;
+        padding: 40px 0; min-height: 100vh; }
+      .app { border-radius: 40px; overflow: hidden; min-height: auto;
+        height: calc(100vh - 80px); max-height: 900px; overflow-y: auto; }
+      .bottom-nav { border-radius: 0 0 40px 40px; }
+    }
   </style>
 </head>
 <body>
