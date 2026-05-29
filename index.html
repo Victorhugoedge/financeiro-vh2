@@ -267,6 +267,7 @@ function saveData() {
     localStorage.setItem('fvh_despesas',      JSON.stringify(state.despesas));
     localStorage.setItem('fvh_receitas',      JSON.stringify(state.receitas));
     localStorage.setItem('fvh_investimentos', JSON.stringify(state.investimentos));
+    localStorage.setItem('fvh_cartoes',       JSON.stringify(state.cartoes));
     localStorage.setItem('fvh_lastSaved',     new Date().toISOString());
   } catch(e) { console.warn('Erro ao salvar:', e); }
 }
@@ -283,13 +284,15 @@ function loadData() {
     const d = localStorage.getItem('fvh_despesas');
     const r = localStorage.getItem('fvh_receitas');
     const i = localStorage.getItem('fvh_investimentos');
+    const c = localStorage.getItem('fvh_cartoes');
     return {
-      despesas:     d ? JSON.parse(d) : DEFAULT_DESPESAS,
-      receitas:     r ? JSON.parse(r) : DEFAULT_RECEITAS,
+      despesas:      d ? JSON.parse(d) : DEFAULT_DESPESAS,
+      receitas:      r ? JSON.parse(r) : DEFAULT_RECEITAS,
       investimentos: i ? JSON.parse(i) : DEFAULT_INVESTIMENTOS,
+      cartoes:       c ? JSON.parse(c) : [],
     };
   } catch(e) {
-    return { despesas: DEFAULT_DESPESAS, receitas: DEFAULT_RECEITAS, investimentos: DEFAULT_INVESTIMENTOS };
+    return { despesas: DEFAULT_DESPESAS, receitas: DEFAULT_RECEITAS, investimentos: DEFAULT_INVESTIMENTOS, cartoes: [] };
   }
 }
 
@@ -304,6 +307,7 @@ let state = {
   despesas:      savedData.despesas,
   receitas:      savedData.receitas,
   investimentos: savedData.investimentos,
+  cartoes: savedData.cartoes,
   form: {},
 };
 
@@ -322,7 +326,7 @@ function setState(patch) {
 
 // ─── Builders ────────────────────────────────────────────────────────────────
 function buildApp() {
-  const {despesas,receitas,investimentos,tab} = state;
+  const {despesas,receitas,investimentos,cartoes,tab} = state;
   const totRec = receitas.reduce((s,r)=>s+r.valor,0);
   const totDesp = despesas.reduce((s,d)=>s+d.valor,0);
   const saldo = totRec - totDesp;
@@ -356,12 +360,13 @@ function buildApp() {
       ${tab==='despesas'     ? buildDespesas()  : ''}
       ${tab==='fixas'        ? buildFixas()     : ''}
       ${tab==='receitas'     ? buildReceitas()  : ''}
+      ${tab==='cartao'       ? buildCartao()   : ''}
       ${tab==='investimentos'? buildInvest()    : ''}
     </div>
 
     <nav class="bottom-nav">
       ${[['dashboard','📊','Início'],['ranking','🏆','Ranking'],['despesas','📋','Despesas'],
-         ['fixas','📌','Fixas'],['receitas','💵','Receitas'],['investimentos','📈','Invest.']
+         ['fixas','📌','Fixas'],['receitas','💵','Receitas'],['cartao','💳','Cartão'],['investimentos','📈','Invest.']
         ].map(([id,icon,label])=>`
         <button class="nav-btn" data-tab="${id}" style="color:${tab===id?'#3b82f6':'#94a3b8'}">
           <span class="nav-icon">${icon}</span>
@@ -390,7 +395,7 @@ function fixaBadge() {
 }
 
 function buildDashboard() {
-  const {despesas,receitas,investimentos} = state;
+  const {despesas,receitas,investimentos,cartoes} = state;
   const totRec = receitas.reduce((s,r)=>s+r.valor,0);
   const totDesp = despesas.reduce((s,d)=>s+d.valor,0);
   const totFixas = despesas.filter(d=>d.fixa).reduce((s,d)=>s+d.valor,0);
@@ -521,6 +526,19 @@ function buildDashboard() {
       <div style="font-size:10px;color:#6ee7b7;font-weight:700">⚡ Rendendo</div>
       <div id="ticker-dash" style="font-size:16px;font-weight:800;color:#fff">...</div>
     </div>
+  </div>`:''}
+
+  <!-- Cartão CTA -->
+  ${cartoes.length>0?`
+  <div class="cta" style="background:#fff;border:1px solid #e2e8f0;cursor:pointer;margin-bottom:12px" data-tab="cartao">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:40px;height:40px;border-radius:12px;background:#fef2f2;display:flex;align-items:center;justify-content:center;font-size:20px">💳</div>
+      <div>
+        <div style="font-weight:700;color:#1e293b;font-size:14px">Cartões de Crédito</div>
+        <div style="font-size:12px;color:#dc2626">Fatura: ${fmt(cartoes.reduce((s,c)=>s+c.gastos.reduce((gs,g)=>gs+g.valor,0),0))}</div>
+      </div>
+    </div>
+    <div style="font-size:20px">→</div>
   </div>`:''}
 
   <!-- Comprovante CTA -->
@@ -724,6 +742,105 @@ function buildReceitas() {
   </div>`;
 }
 
+function buildCartao() {
+  const {cartoes} = state;
+  const totalFaturas = cartoes.reduce((s,c)=>s+c.gastos.reduce((gs,g)=>gs+g.valor,0),0);
+  const totalLimite  = cartoes.reduce((s,c)=>s+c.limite,0);
+  const totalDisp    = cartoes.reduce((s,c)=>s+(c.limite - c.gastos.reduce((gs,g)=>gs+g.valor,0)),0);
+
+  return `
+  <div class="flex-between" style="margin-bottom:16px">
+    <div>
+      <div class="section-title">💳 Cartões de Crédito</div>
+      <div class="section-sub">Faturas e gastos</div>
+    </div>
+    <button class="btn btn-primary btn-sm" data-action="modal-cartao">+ Novo Cartão</button>
+  </div>
+
+  ${cartoes.length>0?`
+  <div class="grid2" style="margin-bottom:12px">
+    <div class="stat-card">
+      <div class="stat-label"><span class="stat-icon" style="background:#fef2f2">💸</span>Total Faturas</div>
+      <div class="stat-val" style="color:#dc2626">${fmt(totalFaturas)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label"><span class="stat-icon" style="background:#f0fdf4">✅</span>Disponível</div>
+      <div class="stat-val" style="color:#16a34a">${fmt(totalDisp)}</div>
+    </div>
+  </div>`:''}
+
+  ${cartoes.length===0?`
+  <div class="card" style="text-align:center;padding:40px;color:#94a3b8">
+    Nenhum cartão cadastrado.<br>
+    <span style="font-size:13px">Clique em "+ Novo Cartão" para começar.</span>
+  </div>`:''}
+
+  ${cartoes.map(cartao=>{
+    const totalGasto = cartao.gastos.reduce((s,g)=>s+g.valor,0);
+    const disponivel = cartao.limite - totalGasto;
+    const pct = Math.min(100,(totalGasto/cartao.limite)*100);
+    const corPct = pct>90?'#ef4444':pct>70?'#f97316':'#22c55e';
+
+    return `
+    <div class="card" style="margin-bottom:12px">
+      <!-- Header cartão -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:46px;height:30px;border-radius:6px;background:linear-gradient(135deg,${cartao.cor||'#1e293b'},${cartao.cor2||'#475569'});display:flex;align-items:center;justify-content:center;font-size:16px">💳</div>
+          <div>
+            <div style="font-weight:800;font-size:15px">${cartao.nome}</div>
+            <div style="font-size:12px;color:#94a3b8">Vence dia ${cartao.diaVenc} · Fecha dia ${cartao.diaFecha}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" data-action="edit-cartao" data-id="${cartao.id}">✏️</button>
+          <button class="btn btn-danger btn-sm" data-action="del-cartao" data-id="${cartao.id}">🗑</button>
+        </div>
+      </div>
+
+      <!-- Limite e uso -->
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-bottom:6px">
+        <span>Usado: <b style="color:#dc2626">${fmt(totalGasto)}</b></span>
+        <span>Limite: <b>${fmt(cartao.limite)}</b></span>
+      </div>
+      <div class="prog-wrap" style="margin-bottom:6px">
+        <div class="prog-bar" style="width:${pct}%;background:${corPct}"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:14px">
+        <span style="color:${corPct};font-weight:700">${pct.toFixed(0)}% usado</span>
+        <span style="color:#16a34a;font-weight:700">Disponível: ${fmt(disponivel)}</span>
+      </div>
+
+      <!-- Gastos -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700;color:#475569">Lançamentos (${cartao.gastos.length})</span>
+        <button class="btn btn-primary btn-sm" data-action="novo-gasto" data-id="${cartao.id}">+ Gasto</button>
+      </div>
+
+      ${cartao.gastos.length===0?`<div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">Nenhum lançamento</div>`:''}
+
+      ${cartao.gastos.map(g=>`
+      <div class="row">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:14px">${g.desc}</div>
+          <div style="font-size:12px;color:#94a3b8">${fmtDate(g.data)}${g.parcelas>1?` · ${g.parcAtual}/${g.parcelas}x`:''}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="font-weight:700;color:#dc2626">${fmt(g.valor)}</span>
+          <button class="btn btn-danger btn-sm" data-action="del-gasto" data-cartid="${cartao.id}" data-gid="${g.id}">🗑</button>
+        </div>
+      </div>`).join('')}
+
+      <!-- Total fatura -->
+      ${cartao.gastos.length>0?`
+      <div style="display:flex;justify-content:space-between;padding:12px 0 0;border-top:2px solid #f1f5f9;margin-top:4px">
+        <span style="font-weight:700;font-size:14px">Total da Fatura</span>
+        <span style="font-weight:800;font-size:16px;color:#dc2626">${fmt(totalGasto)}</span>
+      </div>`:''}
+    </div>`;
+  }).join('')}`;
+}
+
 function buildInvest() {
   const {investimentos} = state;
   const totAporte = investimentos.reduce((s,i)=>s+i.aporte,0);
@@ -914,6 +1031,55 @@ function buildModal() {
     </div>`;
   }
 
+  if(showModal==='cartao') {
+    return `
+    <div class="overlay" id="modal-overlay">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div style="font-size:16px;font-weight:800;margin-bottom:16px">${editId?'✏️ Editar':'➕ Novo'} Cartão</div>
+        <div class="form-group"><label class="form-label">Nome do Cartão</label><input class="form-input" id="f-nome" placeholder="Ex: Nubank, Itaú Visa..." value="${form.nome||''}"></div>
+        <div class="form-group"><label class="form-label">Limite (R$)</label><input class="form-input" id="f-limite" type="number" placeholder="0,00" value="${form.limite||''}"></div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Dia Fechamento</label><input class="form-input" id="f-fecha" type="number" min="1" max="31" placeholder="Ex: 12" value="${form.diaFecha||''}"></div>
+          <div class="form-group"><label class="form-label">Dia Vencimento</label><input class="form-input" id="f-venc" type="number" min="1" max="31" placeholder="Ex: 19" value="${form.diaVenc||''}"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Cor do Cartão</label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+            ${[['#1e293b','#475569'],['#1d4ed8','#3b82f6'],['#7c3aed','#a78bfa'],['#047857','#34d399'],['#b45309','#fbbf24'],['#be123c','#fb7185']].map(([c1,c2])=>`
+            <div style="width:44px;height:28px;border-radius:6px;background:linear-gradient(135deg,${c1},${c2});cursor:pointer;border:2px solid ${(form.cor===c1)?'#3b82f6':'transparent'}" data-action="pick-cor" data-cor="${c1}" data-cor2="${c2}"></div>`).join('')}
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="btn btn-primary" style="flex:1" data-action="save-cartao">${editId?'💾 Salvar':'✓ Adicionar'}</button>
+          <button class="btn btn-ghost" data-action="close-modal">Cancelar</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  if(showModal==='gasto') {
+    return `
+    <div class="overlay" id="modal-overlay">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div style="font-size:16px;font-weight:800;margin-bottom:16px">➕ Novo Gasto</div>
+        <div class="form-group"><label class="form-label">Descrição</label><input class="form-input" id="f-desc" placeholder="Ex: Supermercado, Netflix..." value="${form.desc||''}"></div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" id="f-valor" type="number" placeholder="0,00" value="${form.valor||''}"></div>
+          <div class="form-group"><label class="form-label">Data</label><input class="form-input" id="f-data" type="date" value="${form.data||''}"></div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Parcelas</label><input class="form-input" id="f-parcelas" type="number" min="1" max="48" placeholder="1" value="${form.parcelas||1}"></div>
+          <div class="form-group"><label class="form-label">Parcela atual</label><input class="form-input" id="f-parcAtual" type="number" min="1" placeholder="1" value="${form.parcAtual||1}"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="btn btn-primary" style="flex:1" data-action="save-gasto">✓ Adicionar</button>
+          <button class="btn btn-ghost" data-action="close-modal">Cancelar</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
   if(showModal==='comprovante') {
     return `
     <div class="overlay" id="modal-overlay">
@@ -1062,6 +1228,72 @@ function bindEvents() {
   });
 
   // Comprovante file
+  // Cartão events
+  acts('[data-action="modal-cartao"]',()=>setState({showModal:'cartao',form:{},editId:null}));
+
+  acts('[data-action="edit-cartao"]',e=>{
+    const id=parseInt(e.currentTarget.dataset.id);
+    const c=state.cartoes.find(x=>x.id===id);
+    if(c) setState({showModal:'cartao',form:{...c},editId:id});
+  });
+
+  acts('[data-action="del-cartao"]',e=>{
+    const id=parseInt(e.currentTarget.dataset.id);
+    setState({cartoes:state.cartoes.filter(c=>c.id!==id)});
+  });
+
+  acts('[data-action="novo-gasto"]',e=>{
+    const cartId=parseInt(e.currentTarget.dataset.id);
+    setState({showModal:'gasto',form:{cartId,parcelas:1,parcAtual:1},editId:null});
+  });
+
+  acts('[data-action="del-gasto"]',e=>{
+    const cartId=parseInt(e.currentTarget.dataset.cartid);
+    const gid=parseInt(e.currentTarget.dataset.gid);
+    setState({cartoes:state.cartoes.map(c=>c.id===cartId?{...c,gastos:c.gastos.filter(g=>g.id!==gid)}:c)});
+  });
+
+  acts('[data-action="pick-cor"]',e=>{
+    const cor=e.currentTarget.dataset.cor;
+    const cor2=e.currentTarget.dataset.cor2;
+    const nome=document.getElementById('f-nome')?.value||state.form.nome||'';
+    const limite=document.getElementById('f-limite')?.value||state.form.limite||'';
+    const fecha=document.getElementById('f-fecha')?.value||state.form.diaFecha||'';
+    const venc=document.getElementById('f-venc')?.value||state.form.diaVenc||'';
+    setState({form:{...state.form,nome,limite,diaFecha:fecha,diaVenc:venc,cor,cor2},showModal:'cartao'});
+  });
+
+  acts('[data-action="save-cartao"]',()=>{
+    const nome=document.getElementById('f-nome')?.value.trim();
+    const limite=parseFloat(document.getElementById('f-limite')?.value);
+    if(!nome||!limite) return;
+    const diaFecha=parseInt(document.getElementById('f-fecha')?.value)||1;
+    const diaVenc=parseInt(document.getElementById('f-venc')?.value)||10;
+    const cor=state.form.cor||'#1e293b';
+    const cor2=state.form.cor2||'#475569';
+    const newC={nome,limite,diaFecha,diaVenc,cor,cor2};
+    if(state.editId){
+      setState({cartoes:state.cartoes.map(c=>c.id===state.editId?{...c,...newC}:c),showModal:null,form:{},editId:null});
+    } else {
+      setState({cartoes:[...state.cartoes,{...newC,id:Date.now(),gastos:[]}],showModal:null,form:{},editId:null});
+    }
+  });
+
+  acts('[data-action="save-gasto"]',()=>{
+    const desc=document.getElementById('f-desc')?.value.trim();
+    const valor=parseFloat(document.getElementById('f-valor')?.value);
+    if(!desc||!valor) return;
+    const data=document.getElementById('f-data')?.value||new Date().toISOString().split('T')[0];
+    const parcelas=parseInt(document.getElementById('f-parcelas')?.value)||1;
+    const parcAtual=parseInt(document.getElementById('f-parcAtual')?.value)||1;
+    const cartId=state.form.cartId;
+    const gasto={id:Date.now(),desc,valor,data,parcelas,parcAtual};
+    setState({
+      cartoes:state.cartoes.map(c=>c.id===cartId?{...c,gastos:[...c.gastos,gasto]}:c),
+      showModal:null,form:{},editId:null
+    });
+  });
+
   const fileInput=document.getElementById('comp-file');
   if(fileInput) fileInput.addEventListener('change',handleComprovante);
 
