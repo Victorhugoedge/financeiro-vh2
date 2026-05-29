@@ -766,6 +766,7 @@ function buildInvest() {
     const isento = getIsento(inv);
     const calc = calcRendimento(inv.aporte, taxa, inv.inicio, isento);
     const ra = calc.bruto;
+    const dias = calc.dias;
     const rendMes = inv.aporte*(Math.pow(1+taxa,1/12)-1);
     const pct = Math.min(100,(ra/inv.aporte)*100*5);
     return `
@@ -965,8 +966,18 @@ function bindEvents() {
 
   // Toggle fixa
   act('#toggle-fixa',()=>{
-    const fixa=!state.form.fixa;
-    setState({form:{...state.form,fixa},showModal:fixa?'fixa':'despesa'});
+    // Salva todos os campos preenchidos antes de re-renderizar
+    const nome     = document.getElementById('f-nome')?.value  || state.form.nome     || '';
+    const valor    = document.getElementById('f-valor')?.value || state.form.valor    || '';
+    const prio     = document.getElementById('f-prio')?.value  || state.form.prioridade || 'moderado';
+    const cat      = document.getElementById('f-cat')?.value   || state.form.categoria  || '';
+    const venc     = document.getElementById('f-venc')?.value  || state.form.vencimento || '';
+    const dia      = document.getElementById('f-dia')?.value   || state.form.diaVenc    || '';
+    const fixa     = !state.form.fixa;
+    setState({
+      form:{ ...state.form, nome, valor, prioridade:prio, categoria:cat, vencimento:venc, diaVenc:dia, fixa },
+      showModal: fixa ? 'fixa' : 'despesa'
+    });
   });
 
   // Save despesa
@@ -1062,47 +1073,117 @@ function bindEvents() {
 let tickerInterval = null;
 function startTickers() {
   if(tickerInterval) clearInterval(tickerInterval);
-  tickerInterval = setInterval(()=>{
+
+  // Pre-calcula os valores reais de rendimento para cada investimento
+  function calcTotais() {
     const {investimentos} = state;
-    let totRend = 0;
-    investimentos.forEach(inv=>{
-      const tipo=TIPOS_INV[inv.tipo]||TIPOS_INV.outro;
-      const taxa=inv.taxaCustom||tipo.taxa;
-      const ra=rendAcum(inv.aporte,taxa,inv.inicio);
-      totRend+=ra;
-      const el=document.getElementById(`ticker-${inv.id}`);
-      if(el) el.textContent=fmt(ra + rps(inv.aporte,taxa)*Date.now()/1000 - rps(inv.aporte,taxa)*Date.now()/1000);
-      // simpler: just increment
+    let totBruto = 0, totLiquido = 0, totalRps = 0, totalRpsLiq = 0;
+    investimentos.forEach(inv => {
+      const tipo = TIPOS_INV[inv.tipo] || TIPOS_INV.outro;
+      const taxa = getTaxaEfetiva(inv);
+      const isento = getIsento(inv);
+      const calc = calcRendimento(inv.aporte, taxa, inv.inicio, isento);
+      totBruto   += calc.bruto;
+      totLiquido += calc.liquido;
+      totalRps   += rps(inv.aporte, taxa);
+      // rps líquido aproximado (descontando IR)
+      const dias = calc.dias;
+      const irRate = isento ? 0 : aliquotaIR(dias);
+      totalRpsLiq += rps(inv.aporte, taxa) * (1 - irRate);
+    });
+    return { totBruto, totLiquido, totalRps, totalRpsLiq };
+  }
+
+  // Inicializa dataset.val com valor real calculado
+  function initVals() {
+    const {investimentos} = state;
+    const totais = calcTotais();
+
+    investimentos.forEach(inv => {
+      const taxa = getTaxaEfetiva(inv);
+      const isento = getIsento(inv);
+      const calc = calcRendimento(inv.aporte, taxa, inv.inicio, isento);
+      const el = document.getElementById(`ticker-${inv.id}`);
+      if(el && !el.dataset.init) { el.dataset.val = calc.bruto; el.dataset.init = '1'; }
+      const elLiq = document.getElementById(`ticker-liq-${inv.id}`);
+      if(elLiq && !elLiq.dataset.init) { elLiq.dataset.val = calc.liquido; elLiq.dataset.init = '1'; }
+    });
+
+    const totEl = document.getElementById('ticker-total');
+    if(totEl && !totEl.dataset.init) { totEl.dataset.val = totais.totBruto; totEl.dataset.init = '1'; }
+    const liqEl = document.getElementById('ticker-liq-total');
+    if(liqEl && !liqEl.dataset.init) { liqEl.dataset.val = totais.totLiquido; liqEl.dataset.init = '1'; }
+    const patEl = document.getElementById('ticker-pat-total');
+    if(patEl && !patEl.dataset.init) {
+      const totAporte = state.investimentos.reduce((s,i)=>s+i.aporte,0);
+      patEl.dataset.val = totAporte + totais.totLiquido;
+      patEl.dataset.init = '1';
+    }
+    const dashEl = document.getElementById('ticker-dash');
+    if(dashEl && !dashEl.dataset.init) { dashEl.dataset.val = totais.totBruto; dashEl.dataset.init = '1'; }
+  }
+
+  initVals();
+
+  tickerInterval = setInterval(() => {
+    const {investimentos} = state;
+    const totais = calcTotais();
+
+    // Atualiza ticker de cada investimento
+    investimentos.forEach(inv => {
+      const taxa = getTaxaEfetiva(inv);
+      const isento = getIsento(inv);
+      const dias = Math.max(0, Math.floor((Date.now() - new Date(inv.inicio+'T00:00:00').getTime()) / 86400000));
+      const irRate = isento ? 0 : aliquotaIR(dias);
+      const rpsLiq = rps(inv.aporte, taxa) * (1 - irRate);
+
+      const el = document.getElementById(`ticker-${inv.id}`);
       if(el) {
-        const cur=parseFloat(el.dataset.val||ra);
-        const next=cur+rps(inv.aporte,taxa)*0.1;
-        el.dataset.val=next;
-        el.textContent=fmt(next);
+        const cur = parseFloat(el.dataset.val || 0);
+        const next = cur + rps(inv.aporte, taxa) * 0.1;
+        el.dataset.val = next;
+        el.textContent = fmt(next);
+      }
+      const elLiq = document.getElementById(`ticker-liq-${inv.id}`);
+      if(elLiq) {
+        const cur = parseFloat(elLiq.dataset.val || 0);
+        const next = cur + rpsLiq * 0.1;
+        elLiq.dataset.val = next;
+        elLiq.textContent = fmt(next);
       }
     });
-    const totEl=document.getElementById('ticker-total');
-    if(totEl){
-      const cur=parseFloat(totEl.dataset.val||totRend);
-      const totalRps=investimentos.reduce((s,inv)=>{
-        const taxa=(inv.taxaCustom)||(TIPOS_INV[inv.tipo]||TIPOS_INV.outro).taxa;
-        return s+rps(inv.aporte,taxa);
-      },0);
-      const next=cur+totalRps*0.1;
-      totEl.dataset.val=next;
-      totEl.textContent=fmt(next);
+
+    // Totais
+    const totEl = document.getElementById('ticker-total');
+    if(totEl) {
+      const cur = parseFloat(totEl.dataset.val || 0);
+      const next = cur + totais.totalRps * 0.1;
+      totEl.dataset.val = next;
+      totEl.textContent = fmt(next);
     }
-    const dashEl=document.getElementById('ticker-dash');
-    if(dashEl){
-      const cur=parseFloat(dashEl.dataset.val||totRend);
-      const totalRps=investimentos.reduce((s,inv)=>{
-        const taxa=(inv.taxaCustom)||(TIPOS_INV[inv.tipo]||TIPOS_INV.outro).taxa;
-        return s+rps(inv.aporte,taxa);
-      },0);
-      const next=cur+totalRps*0.1;
-      dashEl.dataset.val=next;
-      dashEl.textContent=fmt(next);
+    const liqEl = document.getElementById('ticker-liq-total');
+    if(liqEl) {
+      const cur = parseFloat(liqEl.dataset.val || 0);
+      const next = cur + totais.totalRpsLiq * 0.1;
+      liqEl.dataset.val = next;
+      liqEl.textContent = fmt(next);
     }
-  },100);
+    const patEl = document.getElementById('ticker-pat-total');
+    if(patEl) {
+      const totAporte = investimentos.reduce((s,i)=>s+i.aporte, 0);
+      const cur = parseFloat(patEl.dataset.val || totAporte);
+      const next = cur + totais.totalRpsLiq * 0.1;
+      patEl.dataset.val = next;
+      patEl.textContent = fmt(next);
+    }
+    const dashEl = document.getElementById('ticker-dash');
+    if(dashEl) {
+      const cur = parseFloat(dashEl.dataset.val || 0);
+      const next = cur + totais.totalRps * 0.1;
+      dashEl.dataset.val = next;
+      dashEl.textContent = fmt(next);
+    }
+  }, 100);
 }
 
 // ─── Comprovante IA ───────────────────────────────────────────────────────────
