@@ -983,20 +983,30 @@ function buildInvest() {
           <span style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:.5px">⚡ Rendimento bruto</span>
           <span class="ticker" style="color:#16a34a;font-weight:800;font-size:16px" id="ticker-${inv.id}">${fmt(calc.bruto)}</span>
         </div>
-        ${!getIsento(inv)?`
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-top:1px solid #dcfce7">
-          <span style="color:#64748b">IOF (${calc.dias}d)</span>
-          <span style="color:#ef4444;font-weight:600">- ${fmt(calc.iof)}</span>
+        <div style="border-top:1px solid #dcfce7;padding-top:4px">
+          ${(function(){
+            if(getIsento(inv)) {
+              return '<div style="font-size:11px;color:#22c55e;padding:4px 0">✅ Isento de IR e IOF</div>';
+            }
+            return '<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0">' +
+              '<span style="color:#64748b">IOF (' + calc.dias + 'd)</span>' +
+              '<span style="color:#ef4444;font-weight:600">- ' + fmt(calc.iof) + '</span>' +
+              '</div>' +
+              '<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-top:1px solid #dcfce7">' +
+              '<span style="color:#64748b">IR (' + (aliquotaIR(calc.dias)*100).toFixed(1) + '%)</span>' +
+              '<span style="color:#ef4444;font-weight:600">- ' + fmt(calc.ir) + '</span>' +
+              '</div>';
+          })()}
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-top:1px solid #dcfce7">
-          <span style="color:#64748b">IR (${(aliquotaIR(calc.dias)*100).toFixed(1)}%)</span>
-          <span style="color:#ef4444;font-weight:600">- ${fmt(calc.ir)}</span>
-        </div>`:'<div style="font-size:11px;color:#22c55e;padding:4px 0;border-top:1px solid #dcfce7">✅ Isento de IR e IOF</div>'}
         <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:800;padding:6px 0 2px;border-top:1px solid #bbf7d0;margin-top:2px">
           <span style="color:#16a34a">Líquido</span>
           <span style="color:#16a34a" id="ticker-liq-${inv.id}">${fmt(calc.liquido)}</span>
         </div>
         <div style="font-size:11px;color:#64748b;margin-top:4px">~${fmt(rendMes)}/mês bruto · Total guardado: ${fmt(inv.aporte + calc.liquido)}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <div style="font-size:11px;color:#94a3b8">Patrimônio atual</div>
+        <div style="font-size:15px;font-weight:800;color:${tipo.cor}">${fmt(inv.aporte + calc.liquido)}</div>
       </div>
     </div>`;
   }).join('')}
