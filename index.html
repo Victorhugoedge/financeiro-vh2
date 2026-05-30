@@ -261,42 +261,88 @@ const DEFAULT_INVESTIMENTOS = [
   {id:3,nome:'LCI Banco Inter',tipo:'lci',aporte:8000,inicio:'2025-03-15',taxaCustom:null},
 ];
 
-// ─── Persistência localStorage ───────────────────────────────────────────────
-function saveData() {
+// ─── Supabase Config ─────────────────────────────────────────────────────────
+const SUPA_URL = 'https://qsjxpaczswuehsdaujgg.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzanhwYWN6c3d1ZWhzZGF1amdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwODc5NzYsImV4cCI6MjA5NTY2Mzk3Nn0.y4QDuBA_e0W4EN5UfcwSqxhSYlFmnb1wju4NnHIzWWg';
+const USER_ID  = 'victor-hugo';
+
+async function supaFetch(method, table, body, query) {
+  query = query || '';
+  const res = await fetch(SUPA_URL + '/rest/v1/' + table + query, {
+    method: method,
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'resolution=merge-duplicates' : '',
+    },
+    body: body ? JSON.stringify(body) : null,
+  });
+  if(!res.ok) { const err = await res.text(); console.error('Supabase error:', err); return null; }
+  if(res.status === 204) return true;
+  return res.json().catch(function(){ return null; });
+}
+
+// Salvar com debounce
+let saveTimeout = null;
+async function saveData() {
   try {
-    localStorage.setItem('fvh_despesas',      JSON.stringify(state.despesas));
-    localStorage.setItem('fvh_receitas',      JSON.stringify(state.receitas));
-    localStorage.setItem('fvh_investimentos', JSON.stringify(state.investimentos));
-    localStorage.setItem('fvh_cartoes',       JSON.stringify(state.cartoes));
-    localStorage.setItem('fvh_lastSaved',     new Date().toISOString());
+    const payload = {
+      user_id:       USER_ID,
+      despesas:      JSON.stringify(state.despesas),
+      receitas:      JSON.stringify(state.receitas),
+      investimentos: JSON.stringify(state.investimentos),
+      cartoes:       JSON.stringify(state.cartoes),
+      updated_at:    new Date().toISOString(),
+    };
+    await supaFetch('POST', 'financeiro_dados', payload);
+    localStorage.setItem('fvh_backup', JSON.stringify(payload));
   } catch(e) { console.warn('Erro ao salvar:', e); }
 }
 
+function autoSave() {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(saveData, 800);
+}
+
 function manualSave() {
-  saveData();
-  state.justSaved = true;
-  render();
-  setTimeout(() => { state.justSaved = false; render(); }, 2500);
+  clearTimeout(saveTimeout);
+  saveData().then(function() {
+    state.justSaved = true;
+    render();
+    setTimeout(function() { state.justSaved = false; render(); }, 2500);
+  });
 }
 
-function loadData() {
+async function loadData() {
   try {
-    const d = localStorage.getItem('fvh_despesas');
-    const r = localStorage.getItem('fvh_receitas');
-    const i = localStorage.getItem('fvh_investimentos');
-    const c = localStorage.getItem('fvh_cartoes');
-    return {
-      despesas:      d ? JSON.parse(d) : DEFAULT_DESPESAS,
-      receitas:      r ? JSON.parse(r) : DEFAULT_RECEITAS,
-      investimentos: i ? JSON.parse(i) : DEFAULT_INVESTIMENTOS,
-      cartoes:       c ? JSON.parse(c) : [],
-    };
-  } catch(e) {
-    return { despesas: DEFAULT_DESPESAS, receitas: DEFAULT_RECEITAS, investimentos: DEFAULT_INVESTIMENTOS, cartoes: [] };
-  }
+    const rows = await supaFetch('GET', 'financeiro_dados', null, '?user_id=eq.' + USER_ID + '&limit=1');
+    if(rows && rows.length > 0) {
+      const row = rows[0];
+      return {
+        despesas:      JSON.parse(row.despesas      || '[]'),
+        receitas:      JSON.parse(row.receitas      || '[]'),
+        investimentos: JSON.parse(row.investimentos || '[]'),
+        cartoes:       JSON.parse(row.cartoes       || '[]'),
+      };
+    }
+  } catch(e) { console.warn('Supabase offline, usando backup local:', e); }
+  try {
+    const backup = localStorage.getItem('fvh_backup');
+    if(backup) {
+      const row = JSON.parse(backup);
+      return {
+        despesas:      JSON.parse(row.despesas      || '[]'),
+        receitas:      JSON.parse(row.receitas      || '[]'),
+        investimentos: JSON.parse(row.investimentos || '[]'),
+        cartoes:       JSON.parse(row.cartoes       || '[]'),
+      };
+    }
+  } catch(e) {}
+  return { despesas: DEFAULT_DESPESAS, receitas: DEFAULT_RECEITAS, investimentos: DEFAULT_INVESTIMENTOS, cartoes: [] };
 }
 
-const savedData = loadData();
+const savedData = { despesas: DEFAULT_DESPESAS, receitas: DEFAULT_RECEITAS, investimentos: DEFAULT_INVESTIMENTOS, cartoes: [] };
 
 let state = {
   tab: 'dashboard',
@@ -304,6 +350,8 @@ let state = {
   showModal: null,
   editId: null,
   filtro: 'todas',
+  mesSel: new Date().getMonth(),
+  anoSel: new Date().getFullYear(),
   despesas:      savedData.despesas,
   receitas:      savedData.receitas,
   investimentos: savedData.investimentos,
@@ -320,7 +368,7 @@ function render() {
 
 function setState(patch) {
   Object.assign(state, patch);
-  saveData();
+  autoSave();
   render();
 }
 
@@ -397,27 +445,42 @@ function fixaBadge() {
 function buildDashboard() {
   const {despesas,receitas,investimentos,cartoes} = state;
   const totRec = receitas.reduce((s,r)=>s+r.valor,0);
-  const totDesp = despesas.reduce((s,d)=>s+d.valor,0);
+  const totDesp_all = despesas.reduce((s,d)=>s+d.valor,0);
   const totFixas = despesas.filter(d=>d.fixa).reduce((s,d)=>s+d.valor,0);
   const totVar = despesas.filter(d=>!d.fixa).reduce((s,d)=>s+d.valor,0);
-  const saldo = totRec-totDesp;
+  const saldo = totRec-totDesp_all;
   const pagas = despesas.filter(d=>d.pago).length;
-  const totPago = despesas.filter(d=>d.pago).reduce((s,d)=>s+d.valor,0);
-  const totPend = despesas.filter(d=>!d.pago).reduce((s,d)=>s+d.valor,0);
   const totInv = investimentos.reduce((s,i)=>s+i.aporte,0);
 
-  // Gráfico de despesas por dia (simulado com dados reais)
   const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  const mesAtual = meses[new Date().getMonth()];
+  const mesesFull = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const mesSel = state.mesSel;
+  const anoSel = state.anoSel;
+  const mesAtual = meses[mesSel];
+  const mesLabel = mesesFull[mesSel];
 
-  // Gera pontos do gráfico baseado nas despesas reais
+  // Gera pontos do gráfico baseado nas despesas do mês selecionado
   const chartData = [];
   for(let d=1;d<=31;d++){
     const val = despesas
-      .filter(dep=>dep.vencimento && new Date(dep.vencimento+'T12:00:00').getDate()===d)
+      .filter(dep=>{
+        if(!dep.vencimento) return false;
+        const dt = new Date(dep.vencimento+'T12:00:00');
+        return dt.getDate()===d && dt.getMonth()===mesSel && dt.getFullYear()===anoSel;
+      })
       .reduce((s,dep)=>s+dep.valor,0);
     chartData.push(val);
   }
+
+  // Totais filtrados pelo mês selecionado
+  const despMes = despesas.filter(d=>{
+    if(!d.vencimento) return false;
+    const dt = new Date(d.vencimento+'T12:00:00');
+    return dt.getMonth()===mesSel && dt.getFullYear()===anoSel;
+  });
+  const totDesp = despMes.reduce((s,d)=>s+d.valor,0);
+  const totPago = despMes.filter(d=>d.pago).reduce((s,d)=>s+d.valor,0);
+  const totPend = despMes.filter(d=>!d.pago).reduce((s,d)=>s+d.valor,0);
   const maxVal = Math.max(...chartData, 100);
 
   // Build SVG sparkline
@@ -435,8 +498,13 @@ function buildDashboard() {
   return `
   <!-- Mês -->
   <div class="mes-bar">
-    <button class="mes-btn">📅 ${mesAtual} ${new Date().getFullYear()} ⌄</button>
-    <button class="expandir-btn">Expandir ⌄</button>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button class="icon-btn" style="width:32px;height:32px;font-size:14px" data-action="mes-prev">‹</button>
+      <div style="background:#fff;border-radius:20px;padding:7px 14px;font-size:14px;font-weight:700;color:#1e293b;box-shadow:0 1px 4px rgba(0,0,0,.07)">
+        📅 ${mesLabel} ${anoSel}
+      </div>
+      <button class="icon-btn" style="width:32px;height:32px;font-size:14px" data-action="mes-next">›</button>
+    </div>
   </div>
 
   <!-- Saldo atual -->
@@ -492,7 +560,7 @@ function buildDashboard() {
       </div>
       ${totDesp>0&&totPago>0?`<span style="background:#f0fdf4;color:#16a34a;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700">vs mês anterior</span>`:''}
     </div>
-    <div style="font-size:13px;color:#64748b;margin-bottom:4px">Total em ${mesAtual}:</div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:4px">Total em ${mesLabel}:</div>
     <div style="font-size:28px;font-weight:800;color:#1e293b;margin-bottom:12px">${fmt(totDesp)}</div>
     <div class="chart-wrap">
       <svg class="chart" viewBox="0 0 320 90" preserveAspectRatio="none" height="90">
@@ -509,9 +577,9 @@ function buildDashboard() {
       </svg>
     </div>
     <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-top:4px">
-      <span>01/${String(new Date().getMonth()+1).padStart(2,'0')}</span>
-      <span>15/${String(new Date().getMonth()+1).padStart(2,'0')}</span>
-      <span>30/${String(new Date().getMonth()+1).padStart(2,'0')}</span>
+      <span>01/${String(mesSel+1).padStart(2,'0')}</span>
+      <span>15/${String(mesSel+1).padStart(2,'0')}</span>
+      <span>30/${String(mesSel+1).padStart(2,'0')}</span>
     </div>
   </div>
 
@@ -1113,6 +1181,20 @@ function bindEvents() {
     el.addEventListener('click',()=>setState({filtro:el.dataset.filtro}));
   });
 
+  // Navegação de mês
+  const mesPrev = document.querySelector('[data-action="mes-prev"]');
+  const mesNext = document.querySelector('[data-action="mes-next"]');
+  if(mesPrev) mesPrev.addEventListener('click',()=>{
+    let m = state.mesSel - 1, a = state.anoSel;
+    if(m < 0) { m = 11; a--; }
+    setState({mesSel:m, anoSel:a});
+  });
+  if(mesNext) mesNext.addEventListener('click',()=>{
+    let m = state.mesSel + 1, a = state.anoSel;
+    if(m > 11) { m = 0; a++; }
+    setState({mesSel:m, anoSel:a});
+  });
+
   const act = (sel,fn) => { const el=document.querySelector(sel); if(el) el.addEventListener('click',fn); };
   const acts = (sel,fn) => document.querySelectorAll(sel).forEach(el=>el.addEventListener('click',fn));
 
@@ -1504,9 +1586,28 @@ async function handleComprovante(e) {
   reader.readAsDataURL(file);
 }
 
-// ─── Boot ─────────────────────────────────────────────────────────────────────
+// ─── Boot assíncrono ─────────────────────────────────────────────────────────
 state.justSaved = false;
-render();
+
+// Mostra loading enquanto carrega do Supabase
+document.getElementById('app').innerHTML = `
+  <div style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f0f4f8;gap:16px">
+    <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;font-size:28px">💰</div>
+    <div style="font-size:16px;font-weight:700;color:#1e293b">Carregando dados...</div>
+    <div style="font-size:13px;color:#94a3b8">Sincronizando com a nuvem</div>
+    <div style="width:40px;height:4px;background:#e2e8f0;border-radius:99px;overflow:hidden">
+      <div style="height:100%;background:#3b82f6;border-radius:99px;animation:load 1.5s ease-in-out infinite alternate;width:60%"></div>
+    </div>
+    <style>@keyframes load{from{width:20%}to{width:90%}}</style>
+  </div>`;
+
+loadData().then(data => {
+  state.despesas      = data.despesas;
+  state.receitas      = data.receitas;
+  state.investimentos = data.investimentos;
+  state.cartoes       = data.cartoes;
+  render();
+});
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
